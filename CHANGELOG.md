@@ -28,7 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SnapshotSeeder` — offline mode: copies a snapshot bundled in `StreamingAssets`
   into a writable location before opening it.
 
+- `ExpressionParser` — parses authored conditions and function calls into a typed
+  syntax tree. Malformed expressions are reported once and degrade gracefully
+  rather than throwing.
+- `BindingRegistry`, `ITarinoiFunctions`, `ITarinoiVariables`, `ITarinoiEntities` —
+  registration of the game code behind `Fn.*`, `Var.*` and `Ent.*`. Plain classes
+  can be bound directly and are adapted reflectively.
+- `VarRef` — a located-but-unread variable reference, so functions can write back.
+- `Dispatcher` — evaluates expressions against the bindings, with short-circuiting
+  boolean logic and a parse cache.
+
 ### Fixed
+- A bare `Var.collection.flag` used as a condition now reads the variable. In the
+  Godot plugin the unresolved reference is itself truthy, so such conditions are
+  always true regardless of the variable's value.
 - Syncing no longer deadlocks when a caller waits on it from Unity's main thread.
   Async work inside the package now uses `ConfigureAwait(false)` so continuations
   never need the main thread to resume.
