@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `VarRef` — a located-but-unread variable reference, so functions can write back.
 - `Dispatcher` — evaluates expressions against the bindings, with short-circuiting
   boolean logic and a parse cache.
+- `TarinoiRuntime` — dialogue playback: walks the authored card graph and raises
+  events for the lines and choices to show. Typed `DialogueLine`, `DialogueChoice`
+  and `StartCard` results.
+- `IHistoryStore` and `InMemoryHistoryStore` — optional visited-choice tracking.
+- Optional re-syncing on a timer while playing, so authored changes appear without
+  restarting play mode.
 
 ### Fixed
 - A bare `Var.collection.flag` used as a condition now reads the variable. In the
