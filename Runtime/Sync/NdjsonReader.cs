@@ -64,7 +64,9 @@ namespace Tarinoi.Sync
             using (var reader = new StreamReader(stream))
             {
                 string line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                // ConfigureAwait(false): see the note in ApiImporter — resuming on
+                // Unity's main thread here would deadlock a blocking caller.
+                while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
                     ct.ThrowIfCancellationRequested();
                     AddLine(page, line);

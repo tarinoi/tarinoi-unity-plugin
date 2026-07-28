@@ -99,7 +99,13 @@ namespace Tarinoi.Sync
 
             try
             {
-                return await RunAsync(baseUri, apiKey, cursor, db, progress, skipTlsVerify, ct);
+                // ConfigureAwait(false) throughout this class is load-bearing, not
+                // stylistic. Unity installs a SynchronizationContext that posts
+                // continuations to the main thread; if a caller blocks the main thread
+                // waiting on this task, those continuations can never run and the
+                // editor deadlocks. Library code must not capture the caller's context.
+                return await RunAsync(baseUri, apiKey, cursor, db, progress, skipTlsVerify, ct)
+                    .ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -145,7 +151,8 @@ namespace Tarinoi.Sync
                         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-ndjson"));
 
                         using (var response = await client.SendAsync(
-                                   request, HttpCompletionOption.ResponseHeadersRead, ct))
+                                   request, HttpCompletionOption.ResponseHeadersRead, ct)
+                                   .ConfigureAwait(false))
                         {
                             if (!response.IsSuccessStatusCode)
                             {
@@ -153,9 +160,11 @@ namespace Tarinoi.Sync
                                     $"{HttpErrorHint(response.StatusCode)} (HTTP {(int)response.StatusCode} for {requestUri.PathAndQuery})");
                             }
 
-                            using (var stream = await response.Content.ReadAsStreamAsync())
+                            using (var stream = await response.Content.ReadAsStreamAsync()
+                                       .ConfigureAwait(false))
                             {
-                                parsed = await NdjsonReader.ParseAsync(stream, ct);
+                                parsed = await NdjsonReader.ParseAsync(stream, ct)
+                                    .ConfigureAwait(false);
                             }
                         }
                     }

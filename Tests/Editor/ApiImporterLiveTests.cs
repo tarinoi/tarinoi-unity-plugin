@@ -22,8 +22,26 @@ namespace Tarinoi.Tests
     [Category("Live")]
     public class ApiImporterLiveTests
     {
+        /// <summary>
+        /// Generous enough for a full sync of a real project, short enough that a
+        /// deadlock fails the run instead of hanging it. Blocking the main thread on
+        /// async I/O is exactly the mistake this guards against.
+        /// </summary>
+        static readonly System.TimeSpan Timeout = System.TimeSpan.FromSeconds(120);
+
         string _apiPath;
         string _apiKey;
+
+        static SyncResult Run(System.Threading.Tasks.Task<SyncResult> task)
+        {
+            if (!task.Wait(Timeout))
+            {
+                Assert.Fail($"live sync did not complete within {Timeout.TotalSeconds:0}s — "
+                            + "suspect a sync-over-async deadlock on Unity's main thread");
+            }
+
+            return task.Result;
+        }
 
         [SetUp]
         public void SetUp()
@@ -42,10 +60,9 @@ namespace Tarinoi.Tests
         {
             using (var fixture = new TestDb())
             {
-                var result = new ApiImporter()
+                var result = Run(new ApiImporter()
                     .SyncAsync(_apiPath, _apiKey, fixture.Db,
-                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify)
-                    .GetAwaiter().GetResult();
+                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify));
 
                 Assert.IsTrue(result.Success, result.Error);
                 Assert.Greater(result.Stats.DocumentsUpserted, 0,
@@ -62,19 +79,17 @@ namespace Tarinoi.Tests
             {
                 var importer = new ApiImporter();
 
-                var first = importer
+                var first = Run(importer
                     .SyncAsync(_apiPath, _apiKey, fixture.Db,
-                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify)
-                    .GetAwaiter().GetResult();
+                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify));
                 Assert.IsTrue(first.Success, first.Error);
 
                 var cursor = fixture.Db.ReadMeta(Data.TarinoiDb.ApiSyncCursorKey);
                 Assert.IsNotEmpty(cursor, "the first sync must leave a cursor behind");
 
-                var second = importer
+                var second = Run(importer
                     .SyncAsync(_apiPath, _apiKey, fixture.Db,
-                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify)
-                    .GetAwaiter().GetResult();
+                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify));
 
                 Assert.IsTrue(second.Success, second.Error);
                 Assert.AreEqual(0, second.Stats.DocumentsUpserted,
@@ -87,10 +102,9 @@ namespace Tarinoi.Tests
         {
             using (var fixture = new TestDb())
             {
-                var result = new ApiImporter()
+                var result = Run(new ApiImporter()
                     .SyncAsync(_apiPath, "definitely-not-a-valid-token", fixture.Db,
-                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify)
-                    .GetAwaiter().GetResult();
+                        skipTlsVerify: TarinoiSettings.Instance.skipTlsVerify));
 
                 Assert.IsFalse(result.Success);
                 StringAssert.Contains("credentials rejected", result.Error);

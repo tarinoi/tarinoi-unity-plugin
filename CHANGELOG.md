@@ -27,3 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cannot be committed or shipped in a build.
 - `SnapshotSeeder` — offline mode: copies a snapshot bundled in `StreamingAssets`
   into a writable location before opening it.
+
+### Fixed
+- Syncing no longer deadlocks when a caller waits on it from Unity's main thread.
+  Async work inside the package now uses `ConfigureAwait(false)` so continuations
+  never need the main thread to resume.
