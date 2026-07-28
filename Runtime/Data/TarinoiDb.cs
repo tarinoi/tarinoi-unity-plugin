@@ -73,13 +73,30 @@ namespace Tarinoi.Data
                 return false;
             }
 
+            Directory.CreateDirectory(BaseDirectory);
+
+            if (!OpenAtPath(PathForProject(projectId)))
+            {
+                return false;
+            }
+
+            ProjectId = projectId;
+            return true;
+        }
+
+        /// <summary>
+        /// Opens a database file directly, rather than by project id. Used for maintenance
+        /// on a copy — snapshot export, for instance — where the file is not in the usual
+        /// location.
+        /// </summary>
+        internal bool OpenAtPath(string path)
+        {
             Close();
 
             try
             {
-                Directory.CreateDirectory(BaseDirectory);
                 _connection = new SQLiteConnection(
-                    PathForProject(projectId),
+                    path,
                     SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.FullMutex);
 
                 // These PRAGMAs return a row, so they must go through ExecuteScalar.
@@ -87,13 +104,12 @@ namespace Tarinoi.Data
                 _connection.ExecuteScalar<string>("PRAGMA journal_mode=WAL");
                 _connection.ExecuteScalar<int>("PRAGMA busy_timeout=5000");
 
-                ProjectId = projectId;
                 InitSchema();
                 return true;
             }
             catch (Exception e)
             {
-                TarinoiLog.Error($"TarinoiDb: failed to open '{PathForProject(projectId)}': {e.Message}");
+                TarinoiLog.Error($"TarinoiDb: failed to open '{path}': {e.Message}");
                 _connection = null;
                 ProjectId = null;
                 return false;

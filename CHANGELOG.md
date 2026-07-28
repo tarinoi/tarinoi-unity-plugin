@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `IHistoryStore` and `InMemoryHistoryStore` — optional visited-choice tracking.
 - Optional re-syncing on a timer while playing, so authored changes appear without
   restarting play mode.
+- **Project Settings → Tarinoi** for connection, codegen and behaviour settings,
+  creating the settings asset on demand.
+- **Tools → Tarinoi** menu: Sync, Regenerate Bindings, Check Bindings, Set API
+  token…, Snapshot for Export, and Clear Local Content.
+- Binding codegen — generates typed C# classes from your synced content, with
+  dispatch emitted as a `switch` so it survives IL2CPP code stripping.
+- `TarinoiCli` — `-executeMethod` entry points for syncing and generating from a
+  build script.
 
 ### Fixed
 - A bare `Var.collection.flag` used as a condition now reads the variable. In the
