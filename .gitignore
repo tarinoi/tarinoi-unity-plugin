@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# JetBrains / VS Code
+.idea/
+.vscode/
+
+# Note: .meta files are part of the package and MUST be committed.

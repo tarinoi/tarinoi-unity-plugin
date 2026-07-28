@@ -1,0 +1,16 @@
+{
+    "name": "Tarinoi.Runtime",
+    "rootNamespace": "Tarinoi",
+    "references": [
+        "Gilzoide.SqliteNet"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

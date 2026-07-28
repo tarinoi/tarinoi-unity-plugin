@@ -1,0 +1,19 @@
+{
+    "name": "Tarinoi.Editor",
+    "rootNamespace": "Tarinoi.Editor",
+    "references": [
+        "Tarinoi.Runtime",
+        "Gilzoide.SqliteNet"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
