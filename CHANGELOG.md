@@ -19,3 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `IDocumentStore` and `SqliteDocumentStore` — content reads for the runtime, with
   an overridable seam for custom or off-thread backends.
 - `TarinoiSettings` — project configuration, loaded from `Resources` at runtime.
+- `ApiImporter` — incremental sync from the Tarinoi documents API: NDJSON pages,
+  cursor pagination that resumes after an interruption, layer-aware upserts, and
+  failures reported as messages you can act on.
+- `NdjsonReader` — streaming newline-delimited JSON parsing.
+- `Credentials` — API token storage outside the project directory, so a token
+  cannot be committed or shipped in a build.
+- `SnapshotSeeder` — offline mode: copies a snapshot bundled in `StreamingAssets`
+  into a writable location before opening it.
