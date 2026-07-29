@@ -220,6 +220,30 @@ namespace Tarinoi.Tests
             Assert.IsInstanceOf<IntLiteral>(intCall.Args[0]);
         }
 
+        [Test]
+        public void BareIntLiteralParsesAsTopLevelExpression()
+        {
+            // A skill-check threshold authored as a plain number (e.g. "10") is a
+            // top-level expression, not a call argument. Regression test for a bug
+            // where this silently parsed to null and every check passed against 0.
+            var node = (IntLiteral)ExpressionParser.ParseCondition("10");
+            Assert.AreEqual(10L, node.Value);
+        }
+
+        [Test]
+        public void BareFloatLiteralParsesAsTopLevelExpression()
+        {
+            var node = (FloatLiteral)ExpressionParser.ParseCondition("3.5");
+            Assert.AreEqual(3.5, node.Value, 1e-9);
+        }
+
+        [Test]
+        public void BareStringLiteralParsesAsTopLevelExpression()
+        {
+            var node = (StringLiteral)ExpressionParser.ParseCondition("\"hello\"");
+            Assert.AreEqual("hello", node.Value);
+        }
+
         // -------------------------------------------------------------------
         // Failures
         // -------------------------------------------------------------------

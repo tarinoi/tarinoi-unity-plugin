@@ -200,6 +200,21 @@ namespace Tarinoi.Expressions
                     return inner;
                 }
 
+                if (!AtEnd && Peek.Kind == TokenKind.Int)
+                {
+                    return new IntLiteral(Consume().IntValue);
+                }
+
+                if (!AtEnd && Peek.Kind == TokenKind.Float)
+                {
+                    return new FloatLiteral(Consume().FloatValue);
+                }
+
+                if (!AtEnd && Peek.Kind == TokenKind.String)
+                {
+                    return new StringLiteral(Consume().Text);
+                }
+
                 return ParseRefOrCall();
             }
 
