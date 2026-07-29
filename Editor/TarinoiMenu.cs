@@ -137,7 +137,7 @@ namespace Tarinoi.Editor
                 return;
             }
 
-            if (!BindingCodegen.Write(model, output, settings.ProjectId))
+            if (!BindingCodegen.Write(model, output, settings.ProjectId, settings.codegenAsmdef))
             {
                 return;
             }

@@ -87,7 +87,16 @@ namespace Tarinoi.Editor.Codegen
         /// <summary>
         /// Writes the four generated files. Returns false if nothing could be written.
         /// </summary>
-        public static bool Write(CodegenModel model, string outputDirectory, string projectId)
+        /// <param name="withAsmdef">
+        /// Whether to write an assembly definition beside the generated code. Needed by
+        /// projects that organise their own code with asmdefs: without one the generated
+        /// classes land in the predefined <c>Assembly-CSharp</c>, which no asmdef-based
+        /// assembly is allowed to reference. Off by default, because turning it on moves
+        /// the generated types out of <c>Assembly-CSharp</c> and would break a project
+        /// that keeps its code there.
+        /// </param>
+        public static bool Write(CodegenModel model, string outputDirectory, string projectId,
+            bool withAsmdef = false)
         {
             try
             {
@@ -101,6 +110,18 @@ namespace Tarinoi.Editor.Codegen
                     CodeEmitter.Lists(model, projectId));
                 File.WriteAllText(Path.Combine(outputDirectory, CodeEmitter.EntitiesFile),
                     CodeEmitter.Entities(model, projectId));
+
+                var asmdefPath = Path.Combine(outputDirectory, CodeEmitter.AsmdefFile);
+                if (withAsmdef)
+                {
+                    File.WriteAllText(asmdefPath, CodeEmitter.Asmdef());
+                }
+                else if (File.Exists(asmdefPath))
+                {
+                    // Turning the setting back off has to remove it, or the assembly
+                    // stays split and the reason is invisible.
+                    File.Delete(asmdefPath);
+                }
 
                 return true;
             }

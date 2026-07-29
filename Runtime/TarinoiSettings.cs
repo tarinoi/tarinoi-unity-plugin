@@ -38,6 +38,11 @@ namespace Tarinoi
         [Tooltip("Regenerate bindings automatically after every successful sync.")]
         public bool codegenOnSync;
 
+        [Tooltip("Give the generated bindings their own assembly. Turn this on if your own "
+                 + "code lives in assembly definitions, since those cannot reference "
+                 + "Assembly-CSharp, where the generated code otherwise lands.")]
+        public bool codegenAsmdef;
+
         [Header("Behaviour")]
         [Tooltip("Show only committed content, hiding uncommitted edits — what a player would see.")]
         public bool committedOnly;

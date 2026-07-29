@@ -131,6 +131,11 @@ namespace Tarinoi.Editor
                 new GUIContent("Output folder"));
             EditorGUILayout.PropertyField(serialized.FindProperty("codegenOnSync"),
                 new GUIContent("Regenerate after sync"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("codegenAsmdef"),
+                new GUIContent("Own assembly definition",
+                    "Turn this on if your own code lives in assembly definitions — they "
+                    + "cannot reference Assembly-CSharp, where the generated bindings "
+                    + "otherwise land."));
         }
 
         static void DrawBehaviourSection(SerializedObject serialized)

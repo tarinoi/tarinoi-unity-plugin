@@ -538,4 +538,67 @@ namespace Tarinoi.Tests
             Assert.IsTrue(BindingCodegen.Load(new TarinoiDb()).IsEmpty);
         }
     }
+
+    /// <summary>
+    /// The optional assembly definition beside the generated code.
+    /// </summary>
+    /// <remarks>
+    /// It has to be optional in both directions. Writing one moves the generated types
+    /// out of <c>Assembly-CSharp</c>, which breaks a project that keeps its own code
+    /// there; leaving a stale one behind after the setting is turned off breaks it just
+    /// as thoroughly, and less visibly.
+    /// </remarks>
+    public class CodegenAsmdefTests
+    {
+        string _output;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _output = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(), "tarinoi-codegen-" + System.Guid.NewGuid());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (System.IO.Directory.Exists(_output))
+            {
+                System.IO.Directory.Delete(_output, recursive: true);
+            }
+        }
+
+        string AsmdefPath => System.IO.Path.Combine(_output, CodeEmitter.AsmdefFile);
+
+        [Test]
+        public void NoAssemblyDefinitionIsWrittenByDefault()
+        {
+            Assert.IsTrue(BindingCodegen.Write(new CodegenModel(), _output, "proj"));
+            FileAssert.DoesNotExist(AsmdefPath);
+        }
+
+        [Test]
+        public void RequestingOneWritesItAlongsideTheGeneratedCode()
+        {
+            Assert.IsTrue(BindingCodegen.Write(new CodegenModel(), _output, "proj", withAsmdef: true));
+
+            FileAssert.Exists(AsmdefPath);
+            var json = System.IO.File.ReadAllText(AsmdefPath);
+
+            StringAssert.Contains($"\"name\": \"{CodeEmitter.Namespace}\"", json);
+            StringAssert.Contains("Tarinoi.Runtime", json);
+
+            // Authored payloads surface as JObject, so the assembly needs Newtonsoft.
+            StringAssert.Contains("Newtonsoft.Json.dll", json);
+        }
+
+        [Test]
+        public void TurningTheSettingOffRemovesTheOneAlreadyThere()
+        {
+            BindingCodegen.Write(new CodegenModel(), _output, "proj", withAsmdef: true);
+            Assert.IsTrue(BindingCodegen.Write(new CodegenModel(), _output, "proj", withAsmdef: false));
+
+            FileAssert.DoesNotExist(AsmdefPath);
+        }
+    }
 }

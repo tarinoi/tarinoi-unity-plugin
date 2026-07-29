@@ -69,7 +69,7 @@ namespace Tarinoi.Ui
             _runtime.SyncFailed -= OnSyncFailed;
         }
 
-        void OnSyncCompleted(Sync.SyncStats stats)
+        void OnSyncCompleted(SyncStats stats)
         {
             if (gameObject.activeInHierarchy)
             {

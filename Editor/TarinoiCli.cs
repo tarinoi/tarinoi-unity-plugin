@@ -17,6 +17,62 @@ namespace Tarinoi.Editor
     /// </remarks>
     public static class TarinoiCli
     {
+        /// <summary>
+        /// Points the project at a Tarinoi project, creating the settings asset if needed.
+        /// </summary>
+        /// <remarks>
+        /// Every other entry point here needs an API path, and until this existed the only
+        /// way to set one was the Project Settings window — so a CI job or a scripted
+        /// first-run could not get started at all.
+        /// <code>
+        /// Unity -batchmode -quit -projectPath . \
+        ///   -executeMethod Tarinoi.Editor.TarinoiCli.Configure \
+        ///   -tarinoiApiPath https://…/documents
+        /// </code>
+        /// The API token is deliberately not settable this way: it lives outside the
+        /// project so it cannot be committed, and a token on a command line ends up in
+        /// shell history and CI logs.
+        /// </remarks>
+        public static void Configure()
+        {
+            var apiPath = Argument("-tarinoiApiPath");
+            if (string.IsNullOrEmpty(apiPath))
+            {
+                Fail("Configure needs -tarinoiApiPath <documents endpoint>.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(TarinoiSettings.ProjectIdFromApiPath(apiPath)))
+            {
+                Fail($"'{apiPath}' is not a documents endpoint — it should end in /documents.");
+                return;
+            }
+
+            var settings = TarinoiSettingsProvider.LoadOrCreate();
+            settings.apiPath = apiPath;
+
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+            TarinoiSettings.ClearCache();
+
+            TarinoiLog.Info($"Tarinoi: project set to '{settings.ProjectId}'.");
+        }
+
+        /// <summary>Reads a value that follows the given flag on the command line.</summary>
+        static string Argument(string flag)
+        {
+            var args = Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length - 1; i++)
+            {
+                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase))
+                {
+                    return args[i + 1];
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Syncs content and regenerates bindings.</summary>
         public static void SyncAndGenerate()
         {
@@ -97,7 +153,8 @@ namespace Tarinoi.Editor
                     if (regenerate)
                     {
                         var model = BindingCodegen.Load(db);
-                        if (!BindingCodegen.Write(model, settings.codegenOutputPath, settings.ProjectId))
+                        if (!BindingCodegen.Write(model, settings.codegenOutputPath, settings.ProjectId,
+                                settings.codegenAsmdef))
                         {
                             Fail("could not write the generated bindings.");
                             return;

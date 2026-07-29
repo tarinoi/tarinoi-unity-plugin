@@ -1,7 +1,12 @@
 using System.Collections.Generic;
 
-namespace Tarinoi.Sync
+namespace Tarinoi
 {
+    // SyncStats and SyncProgress live in Tarinoi rather than Tarinoi.Sync because they
+    // are what TarinoiRuntime's SyncCompleted and SyncProgress events hand to game code.
+    // Under Tarinoi.Sync, subscribing to an event on a Tarinoi type needed a second using
+    // and failed with an error that pointed at the payload rather than the event.
+
     /// <summary>What a sync changed. Reported on completion and useful in the console.</summary>
     public sealed class SyncStats
     {
@@ -38,8 +43,15 @@ namespace Tarinoi.Sync
             Fraction = fraction;
         }
     }
+}
 
+namespace Tarinoi.Sync
+{
     /// <summary>The outcome of a sync: either stats, or a human-actionable error.</summary>
+    /// <remarks>
+    /// Stays in <c>Tarinoi.Sync</c>: this is what the importer returns, not what the
+    /// runtime's events carry.
+    /// </remarks>
     public sealed class SyncResult
     {
         public bool Success => Error == null;

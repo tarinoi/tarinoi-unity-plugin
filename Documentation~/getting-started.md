@@ -164,6 +164,9 @@ Unity -batchmode -quit -projectPath . \
 | Dialogue stops with "has no pin 'x'" | A card's output selector returned a pin the card does not have. Fix the selector or add the pin. |
 | A build has no dialogue, though the editor does | No snapshot was exported. See "Shipping a build" — a player cannot read the editor's content. |
 | A build logs "No API token saved" | It is trying to sync. Turn on Offline mode; players should play a snapshot, not call the API. |
+| "The type 'JObject' is defined in an assembly that is not referenced" | Your assembly definition has **Override References** on. Add `Newtonsoft.Json.dll` to its precompiled references — authored payloads reach you as `JObject`. |
+| "The type or namespace name 'Generated' does not exist" from your own assembly definition | Generated code lands in `Assembly-CSharp`, which no asmdef can reference. Turn on **Own assembly definition** in Project Settings → Tarinoi and regenerate. |
+| A fresh clone of your repository does not compile | Your committed code derives from generated bindings, and the generated folder is ignored. Either commit it, or say in your README that Sync and Regenerate Bindings come before the first compile. |
 
 ## Reference
 
@@ -171,4 +174,6 @@ Unity -batchmode -quit -projectPath . \
 - **Tools → Tarinoi** — Sync, Regenerate Bindings, Check Bindings, Set API token,
   Snapshot for Export, Clear Local Content, Create Quickstart Scene.
 - **Command line** — `-executeMethod Tarinoi.Editor.TarinoiCli.SyncAndGenerate`
-  syncs and regenerates from a build script.
+  syncs and regenerates from a build script. `TarinoiCli.Configure -tarinoiApiPath <url>`
+  points a fresh checkout at a project without opening the editor; the token still has to
+  be set by hand, so it never reaches a log.
