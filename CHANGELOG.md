@@ -49,8 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   token…, Snapshot for Export, and Clear Local Content.
 - Binding codegen — generates typed C# classes from your synced content, with
   dispatch emitted as a `switch` so it survives IL2CPP code stripping.
-- `TarinoiCli` — `-executeMethod` entry points for syncing and generating from a
-  build script.
+- `TarinoiCli` — `-executeMethod` entry points for syncing, generating and exporting
+  a snapshot from a build script.
+- A ready-to-play interface: an entry-point picker and a scrolling dialogue view,
+  built at runtime so a scene needs no setup. **Tools → Tarinoi → Create Quickstart
+  Scene** assembles one.
+- `DialogueTrigger`, and collider-based `DialogueTriggerVolume` / `…Volume2D`, for
+  starting dialogue from the world.
+- Quickstart sample showing where a game registers its own bindings.
 
 ### Fixed
 - A bare `Var.collection.flag` used as a condition now reads the variable. In the

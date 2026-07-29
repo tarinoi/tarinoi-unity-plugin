@@ -21,12 +21,13 @@
   },
   "dependencies": {
     "com.gilzoide.sqlite-net": "1.3.2",
-    "com.unity.nuget.newtonsoft-json": "3.2.2"
+    "com.unity.nuget.newtonsoft-json": "3.2.2",
+    "com.unity.ugui": "2.0.0"
   },
   "samples": [
     {
       "displayName": "Quickstart",
-      "description": "A start-card picker and scrolling dialogue feed built with UGUI. The fastest way to see Tarinoi content playing in your project.",
+      "description": "A ready-to-play scene: pick a starting point and play dialogue, with a place to register your own bindings.",
       "path": "Samples~/Quickstart"
     }
   ]

@@ -29,6 +29,29 @@ namespace Tarinoi.Editor
             Run(regenerate: true, sync: false);
         }
 
+        /// <summary>
+        /// Exports the bundled snapshot a build plays from. Required before shipping:
+        /// a player has its own storage location and cannot see content synced in the
+        /// editor.
+        /// </summary>
+        public static void ExportSnapshot()
+        {
+            var settings = TarinoiSettingsProvider.LoadOrCreate();
+            if (string.IsNullOrEmpty(settings.ProjectId))
+            {
+                Fail("no API path configured — set it in Project Settings > Tarinoi.");
+                return;
+            }
+
+            if (!SnapshotExporter.Export(settings.ProjectId))
+            {
+                Fail("could not export a snapshot.");
+                return;
+            }
+
+            AssetDatabase.Refresh();
+        }
+
         static void Run(bool regenerate, bool sync)
         {
             var settings = TarinoiSettingsProvider.LoadOrCreate();

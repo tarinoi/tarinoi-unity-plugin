@@ -2,7 +2,8 @@
     "name": "Tarinoi.Runtime",
     "rootNamespace": "Tarinoi",
     "references": [
-        "Gilzoide.SqliteNet"
+        "Gilzoide.SqliteNet",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
