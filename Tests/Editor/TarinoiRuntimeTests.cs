@@ -997,5 +997,22 @@ namespace Tarinoi.Tests
 
             Assert.AreEqual(true, _h.Runtime.EvalExpression("Fn.g.True()"));
         }
+
+        [Test]
+        public void ListReferencesResolveAgainstRealSyncedCollectionManifests()
+        {
+            // Regression test: SeedCollection puts the Ls.* name in the payload, which
+            // real synced content never does — the name only lives in the document's
+            // own identifier column. That gap meant every Ls.* list silently failed to
+            // load, so e.g. a skill check's threshold (Ls.global.thresholds.heroic)
+            // always evaluated to null and, via the double-fallback, to zero.
+            _h.SeedCollectionByIdentifier("lists-col", "global", "Global lists")
+              .SeedListSpec("lists-col", "thresholds", "Thresholds",
+                  ("easy", 3), ("heroic", 9))
+              .Configure();
+
+            Assert.AreEqual(9d, _h.Runtime.EvalExpression("Ls.global.thresholds.heroic"));
+            Assert.AreEqual(3d, _h.Runtime.EvalExpression("Ls.global.thresholds.easy"));
+        }
     }
 }

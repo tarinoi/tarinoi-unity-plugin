@@ -144,6 +144,7 @@ namespace Tarinoi
         // Layer-merged caches of everything that isn't a card, rebuilt after each sync.
         readonly Dictionary<string, JObject> _collections = new Dictionary<string, JObject>();
         readonly Dictionary<string, string> _collectionLabels = new Dictionary<string, string>();
+        readonly Dictionary<string, string> _collectionIdentifiers = new Dictionary<string, string>();
         readonly Dictionary<string, JObject> _entities = new Dictionary<string, JObject>();
         readonly Dictionary<string, List<JObject>> _lists = new Dictionary<string, List<JObject>>();
 
@@ -1000,6 +1001,7 @@ namespace Tarinoi
 
             _collections.Clear();
             _collectionLabels.Clear();
+            _collectionIdentifiers.Clear();
             _entities.Clear();
             _lists.Clear();
 
@@ -1025,6 +1027,7 @@ namespace Tarinoi
 
                 _collections[row.DocumentId] = payload;
                 _collectionLabels[row.DocumentId] = Str(payload["label"]);
+                _collectionIdentifiers[row.DocumentId] = row.Identifier ?? "";
             }
 
             // Fall back to the collections table, which the importer rebuilds and which
@@ -1045,6 +1048,7 @@ namespace Tarinoi
                 _collections[row.CollectionId] = payload;
                 _collectionLabels[row.CollectionId] =
                     string.IsNullOrEmpty(row.CollectionName) ? Str(payload["label"]) : row.CollectionName;
+                _collectionIdentifiers[row.CollectionId] = row.CollectionName ?? "";
             }
         }
 
@@ -1077,10 +1081,14 @@ namespace Tarinoi
                     continue;
                 }
 
+                // collection_name (the Ls.* key) lives at payload.collection_name on
+                // older content; current content carries it as the document's own
+                // identifier instead, which the payload itself never includes.
                 var name = Str(entry.Value["collection_name"]);
                 if (name.Length == 0)
                 {
-                    name = Str(entry.Value["identifier"]);
+                    _collectionIdentifiers.TryGetValue(entry.Key, out name);
+                    name ??= "";
                 }
 
                 if (name.Length > 0)

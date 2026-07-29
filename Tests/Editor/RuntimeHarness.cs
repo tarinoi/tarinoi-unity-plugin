@@ -235,6 +235,59 @@ namespace Tarinoi.Tests
             return this;
         }
 
+        /// <summary>
+        /// Writes a collection manifest the way the live sync actually produces one:
+        /// the <c>Ls.*</c> name lives only in the document's own identifier column,
+        /// never inside the payload. <see cref="SeedCollection"/> puts the name in the
+        /// payload too, which masks bugs that only show up against real synced content.
+        /// </summary>
+        public RuntimeHarness SeedCollectionByIdentifier(string collectionId, string identifier,
+            string label, string collectionType = "list-collection")
+        {
+            var payload = new JObject
+            {
+                ["label"] = label,
+                ["collection_type"] = collectionType,
+            };
+
+            WriteDocument("collection-manifest", identifier,
+                payload.ToString(Newtonsoft.Json.Formatting.None), collectionId);
+            return this;
+        }
+
+        /// <summary>Writes a list-spec document (the options behind an <c>Ls.*</c> list) into a collection.</summary>
+        public RuntimeHarness SeedListSpec(string collectionId, string listId, string label,
+            params (string key, double value)[] options)
+        {
+            var payload = new JObject
+            {
+                ["label"] = label,
+                ["list_options"] = new JArray(Array.ConvertAll(options, o => (JToken)new JObject
+                {
+                    ["key"] = o.key,
+                    ["value"] = o.value,
+                })),
+            };
+
+            using (var db = new TarinoiDb())
+            {
+                if (!db.Open(_projectId))
+                {
+                    throw new InvalidOperationException("could not open the harness database");
+                }
+
+                db.Execute(
+                    @"INSERT OR REPLACE INTO documents
+                      (document_id, collection_id, document_type, layer_id, namespace, identifier,
+                       update_key, is_tombstone, is_archived, is_moved, payload)
+                      VALUES (?, ?, 'list-spec', ?, 'document', ?, 1, 0, 0, 0, ?)",
+                    listId, collectionId, LayerFilter.MainLayer, listId,
+                    payload.ToString(Newtonsoft.Json.Formatting.None));
+            }
+
+            return this;
+        }
+
         void WriteDocument(string documentType, string identifier, string payload,
             string documentId = null)
         {
