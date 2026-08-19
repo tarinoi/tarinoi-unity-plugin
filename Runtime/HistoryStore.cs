@@ -3,31 +3,37 @@ using System.Collections.Generic;
 namespace Tarinoi
 {
     /// <summary>
-    /// Remembers which choices a player has already taken, so previously seen options
-    /// can be shown differently.
+    /// Remembers which cards a player has already seen, so previously seen options can
+    /// be shown differently — or, with the <c>shown_once</c> card flag, not at all.
     /// </summary>
     /// <remarks>
     /// Implement this over your save system to persist across sessions. Leave
     /// <see cref="TarinoiRuntime.HistoryStore"/> null to skip tracking entirely, in
     /// which case every choice reports <see cref="DialogueChoice.Visited"/> as false.
+    /// <para>
+    /// The runtime keeps this state only while a dialogue is running: it asks for a
+    /// dialogue's seen cards on start and hands the updated set back when the dialogue
+    /// ends, so nothing is retained inside the plugin.
+    /// </para>
     /// </remarks>
     public interface IHistoryStore
     {
         /// <summary>
-        /// Card ids already chosen in the dialogue starting at <paramref name="startCardId"/>,
+        /// Card ids already seen in the dialogue starting at <paramref name="startCardId"/>,
         /// across all previous visits. Return an empty collection when nothing is recorded.
         /// </summary>
         IEnumerable<string> GetVisited(string startCardId);
 
         /// <summary>
-        /// Persists the cumulative set of chosen card ids for an entry point. Called
-        /// when a dialogue ends or is aborted.
+        /// Persists the cumulative set of seen card ids for an entry point: every NPC
+        /// line displayed and every PC line the player chose. Called when a dialogue
+        /// ends or is aborted.
         /// </summary>
         void SaveVisited(string startCardId, IEnumerable<string> visitedIds);
     }
 
     /// <summary>
-    /// Keeps visited choices for the lifetime of the process only.
+    /// Keeps seen cards for the lifetime of the process only.
     /// </summary>
     /// <remarks>
     /// Enough to stop a player re-reading the same option within a play session.

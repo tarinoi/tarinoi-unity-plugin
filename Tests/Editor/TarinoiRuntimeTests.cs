@@ -942,6 +942,133 @@ namespace Tarinoi.Tests
         }
 
         // =====================================================================
+        // shown_once
+        //
+        // A card carrying shown_once stops being a valid continuation once the player
+        // has seen it, so authors get "say this only once" without a flag per card.
+        // Spent among other options it is simply dropped; spent as the only way
+        // forward it dead-ends the dialogue, like any card with nowhere valid to go.
+        // =====================================================================
+
+        /// <summary>Hub offering three player lines, the first show-once and looping back.</summary>
+        void SeedShownOnceHub(string loopTarget = "hub")
+        {
+            _h.Store.Add("hub", CardBuilder.Blank().To("a", "b", "c"));
+            _h.Store.Add("a", CardBuilder.Line("Once only").Mode("pc").Geo(0).ShownOnce().To(loopTarget));
+            _h.Store.Add("b", CardBuilder.Line("Again").Mode("pc").Geo(10).To("hub"));
+            _h.Store.Add("c", CardBuilder.Line("And again").Mode("pc").Geo(20).To("hub"));
+        }
+
+        static List<string> LinesOf(IEnumerable<DialogueChoice> choices) =>
+            choices.Select(choice => choice.Line).ToList();
+
+        [Test]
+        public void ShownOnceOptionDisappearsOnceThePlayerTakesIt()
+        {
+            _h.Configure();
+            SeedShownOnceHub();
+
+            _h.Start("hub");
+            CollectionAssert.AreEqual(new[] { "Once only", "Again", "And again" },
+                LinesOf(_h.Choices), "offered normally the first time");
+
+            _h.Select(0);   // take it, loop back to the hub
+
+            CollectionAssert.AreEqual(new[] { "Again", "And again" },
+                LinesOf(_h.Choices), "the spent option is filtered out");
+        }
+
+        [Test]
+        public void ShownOnceSurvivesTheDialogueThroughTheHistoryStore()
+        {
+            _h.Configure();
+            _h.Runtime.HistoryStore = new InMemoryHistoryStore();
+            SeedShownOnceHub("flow:end");
+
+            _h.Start("hub");
+            _h.Select(0);   // take it; the dialogue ends and history is flushed
+
+            _h.Start("hub");
+
+            CollectionAssert.AreEqual(new[] { "Again", "And again" },
+                LinesOf(_h.Choices), "still filtered on a later visit");
+        }
+
+        [Test]
+        public void ShownOnceResetsBetweenDialoguesWithoutAHistoryStore()
+        {
+            _h.Configure();
+            SeedShownOnceHub("flow:end");
+
+            _h.Start("hub");
+            _h.Select(0);
+
+            _h.Start("hub");
+
+            CollectionAssert.AreEqual(new[] { "Once only", "Again", "And again" },
+                LinesOf(_h.Choices), "nothing persists the seen set, so it is offered again");
+        }
+
+        [Test]
+        public void ShownOnceCountsAnNpcLineFromTheMomentItIsDisplayed()
+        {
+            _h.Configure();
+            // n1 plays as a plain line first, then turns up again as a candidate.
+            _h.Store.Add("start", CardBuilder.Blank().To("n1"));
+            _h.Store.Add("n1", CardBuilder.Line("Greeting").Mode("npc").Geo(0).ShownOnce().To("hub"));
+            _h.Store.Add("hub", CardBuilder.Blank().To("n1", "n2", "n3"));
+            _h.Store.Add("n2", CardBuilder.Line("Small talk").Mode("npc").Geo(10).To("flow:end"));
+            _h.Store.Add("n3", CardBuilder.Line("More small talk").Mode("npc").Geo(20).To("flow:end"));
+
+            _h.Start("start");
+            Assert.AreEqual("Greeting", _h.LastLine.Line);
+
+            LogAssert.Expect(LogType.Warning, new Regex("sharing the same condition"));
+            _h.Advance();   // through n1 to the hub
+
+            CollectionAssert.AreEqual(new[] { "Small talk", "More small talk" },
+                LinesOf(_h.Choices), "a displayed NPC line counts as seen");
+        }
+
+        [Test]
+        public void ASpentShownOnceCardReachedOnItsOwnEndsTheDialogue()
+        {
+            _h.Configure();
+            _h.Runtime.HistoryStore = new InMemoryHistoryStore();
+            _h.Store.Add("s1", CardBuilder.Blank().To("a"));
+            _h.Store.Add("a", CardBuilder.Line("Only way through").Mode("npc").ShownOnce().To("flow:end"));
+
+            _h.Start("s1");
+            Assert.AreEqual("Only way through", _h.LastLine.Line, "shown the first time");
+            _h.Advance();
+
+            _h.Lines.Clear();
+            LogAssert.Expect(LogType.Error, new Regex("nothing else continues from here"));
+            _h.Start("s1");
+
+            Assert.IsEmpty(_h.Lines, "not shown a second time");
+            Assert.AreEqual(2, _h.EndedCount,
+                "a spent card is no continuation at all — the dialogue ends");
+        }
+
+        [Test]
+        public void TheDialogueEndsWhenEveryCandidateIsASpentShownOnceCard()
+        {
+            _h.Configure();
+            _h.Store.Add("hub", CardBuilder.Blank().To("a", "b"));
+            _h.Store.Add("a", CardBuilder.Line("First").Mode("pc").Geo(0).ShownOnce().To("hub"));
+            _h.Store.Add("b", CardBuilder.Line("Second").Mode("pc").Geo(10).ShownOnce().To("hub"));
+
+            _h.Start("hub");
+            _h.Select(0);   // "First" spent; only "Second" is left, so it is forced
+
+            LogAssert.Expect(LogType.Error, new Regex("already seen"));
+            _h.Select(0);   // "Second" spent; the hub now has nothing to offer
+
+            Assert.AreEqual(1, _h.EndedCount, "the dialogue ends rather than hanging");
+        }
+
+        // =====================================================================
         // Start cards and caches
         // =====================================================================
 

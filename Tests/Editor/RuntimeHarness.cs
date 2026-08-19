@@ -111,6 +111,13 @@ namespace Tarinoi.Tests
             return this;
         }
 
+        /// <summary>Marks the card show-once, the flag authors set in Tarinoi.</summary>
+        public CardBuilder ShownOnce()
+        {
+            _card["shown_once"] = true;
+            return this;
+        }
+
         public CardBuilder Geo(double y)
         {
             _card["geo"] = new JObject { ["x"] = 0, ["y"] = y };

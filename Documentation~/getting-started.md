@@ -124,6 +124,69 @@ what you register. Getting this wrong fails when the dialogue runs, not when you
 To start dialogue from the world, put a `DialogueTrigger` (or the collider-based
 `DialogueTriggerVolume`) on an object and handle its `InteractionTriggered` event.
 
+## Remembering what the player has seen
+
+Two features depend on knowing which cards a player has already been shown: the
+`Visited` flag on a choice, which lets you dim options already taken, and the
+**shown once** flag an author can tick on a card in Tarinoi.
+
+The plugin stays stateless about this. It asks for a dialogue's seen cards when the
+dialogue starts and hands the updated set back when it ends — persisting them is your
+job, keyed by the dialogue's start card id:
+
+```csharp
+public sealed class SaveFileHistory : IHistoryStore
+{
+    public IEnumerable<string> GetVisited(string startCardId) =>
+        MySave.LoadSeenCards(startCardId);
+
+    public void SaveVisited(string startCardId, IEnumerable<string> visitedIds) =>
+        MySave.StoreSeenCards(startCardId, visitedIds);
+}
+
+TarinoiRuntime.Instance.HistoryStore = new SaveFileHistory();
+```
+
+`InMemoryHistoryStore` is supplied for when you only need this to hold for the current
+play session. Leave `HistoryStore` null and nothing survives past the current dialogue.
+
+A card joins the seen set the moment the player actually sees it: an NPC line when it
+is displayed, a player line when it is chosen. An option that was offered but not taken
+does not count.
+
+### The shown once flag
+
+When an author ticks **shown once**, a card the player has already seen stops being a
+valid continuation — the common "ask this only once" pattern, without a flag per card
+in your game code.
+
+A spent card is skipped wherever the runtime would otherwise go to it, and its
+functions do not run, since nobody saw it. What that means depends on what else is
+available:
+
+- **Offered alongside other options:** dropped from the choice set, before its entry
+  condition is even evaluated.
+- **The last option standing:** followed directly, with no choice UI — the same rule
+  that applies when entry conditions rule options out.
+- **The only way forward:** the dialogue ends, as a dead end like any other (below).
+
+Without an `IHistoryStore` the flag still works inside a single dialogue — a hub the
+player loops back to will not re-offer a spent option — but it resets when the dialogue
+ends.
+
+### Dead ends
+
+A card with nowhere valid to go ends the dialogue and logs an error, handing the player
+back to your game rather than leaving them stuck. Every cause is treated the same way:
+no connections, no connection naming a target, every entry condition false, every
+remaining candidate a spent `shown_once` card, or a spent `shown_once` card that was
+the only continuation.
+
+The message names the card and says which case it was, so the cause stays identifiable
+even though the level does not vary. Tarinoi's health check flags graphs where a dead
+end can arise, at authoring time. If a `shown_once` card must stay reachable after it
+is spent, give its source a fallback option without the flag.
+
 ## Shipping a build
 
 **This step is required, not optional.** A build cannot see the content you synced in

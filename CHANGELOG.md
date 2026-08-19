@@ -40,7 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TarinoiRuntime` — dialogue playback: walks the authored card graph and raises
   events for the lines and choices to show. Typed `DialogueLine`, `DialogueChoice`
   and `StartCard` results.
-- `IHistoryStore` and `InMemoryHistoryStore` — optional visited-choice tracking.
+- `IHistoryStore` and `InMemoryHistoryStore` — optional seen-card tracking, which
+  drives the `Visited` flag on choices and the `shown_once` card flag.
+- `shown_once` card flag — a card an author marks show-once stops being a valid
+  continuation once the player has seen it: dropped from a choice set, or, when it
+  is the only way forward, ending the dialogue as an ordinary dead end.
+- Running out of continuations because every remaining candidate was a spent
+  `shown_once` card is reported like any other dead end: the dialogue ends and an
+  error names the card and the cause.
 - Optional re-syncing on a timer while playing, so authored changes appear without
   restarting play mode.
 - **Project Settings → Tarinoi** for connection, codegen and behaviour settings,

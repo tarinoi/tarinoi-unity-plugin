@@ -89,7 +89,9 @@ namespace Tarinoi
         public IDocumentStore DocumentStore { get; set; }
 
         /// <summary>
-        /// Optional visited-choice tracking. Leave null to skip it entirely.
+        /// Optional seen-card tracking. Leave null to skip it entirely, in which case
+        /// choices always report <see cref="DialogueChoice.Visited"/> as false and the
+        /// <c>shown_once</c> card flag has no effect beyond the current dialogue.
         /// </summary>
         public IHistoryStore HistoryStore { get; set; }
 
@@ -136,6 +138,12 @@ namespace Tarinoi
         readonly HashSet<string> _visited = new HashSet<string>();
 
         string _sessionStartCardId = "";
+
+        /// <summary>
+        /// Every line card actually shown to the player: NPC lines when displayed, PC
+        /// lines when chosen. Seeded from <see cref="HistoryStore"/> when a dialogue
+        /// starts and handed back when it ends, so the runtime stores nothing itself.
+        /// </summary>
         readonly HashSet<string> _sessionVisitedChoices = new HashSet<string>();
 
         readonly List<string> _pendingSystemLines = new List<string>();
@@ -576,6 +584,19 @@ namespace Tarinoi
 
         void ProcessLine(JObject card, string cardId, string collectionId)
         {
+            // A spent shown_once card is not a valid continuation. Reaching one on its
+            // own is the same dead end as a card whose input conditions all failed — end
+            // the dialogue rather than show it, and report it the same way. Its functions
+            // do not run: nobody saw it.
+            if (IsSpentShownOnce(card, cardId))
+            {
+                TarinoiLog.Error($"TarinoiRuntime: card '{cardId}' in '{collectionId}' is shown_once "
+                                 + "and has already been seen, and nothing else continues from here "
+                                 + "— ending the dialogue.");
+                FinishDialogue();
+                return;
+            }
+
             if (IsPcCard(card))
             {
                 // A player line reached on its own is still a choice — of one.
@@ -587,6 +608,11 @@ namespace Tarinoi
             }
 
             EvalCardFunctions(card, cardId);
+
+            // An NPC line counts as seen the moment it is displayed; a PC line only
+            // counts once the player picks it (see SelectChoiceAsync).
+            _sessionVisitedChoices.Add(cardId);
+
             State = DialogueState.NpcLine;
             _currentCard = card;
             _currentCardId = cardId;
@@ -753,11 +779,19 @@ namespace Tarinoi
             });
         }
 
+        /// <summary>
+        /// Whether a card is marked <c>shown_once</c> and the player has already seen it,
+        /// which rules it out both as a choice and as a continuation.
+        /// </summary>
+        bool IsSpentShownOnce(JObject card, string cardId) =>
+            Flag(card, "shown_once") && _sessionVisitedChoices.Contains(cardId);
+
         async Task BuildChoicesFromTargetsAsync(List<string> targetIds, string collectionId,
             string sourceCardId)
         {
             var choices = new List<DialogueChoice>();
             var lineCandidates = 0;
+            var shownOnceFiltered = 0;
 
             foreach (var targetId in targetIds)
             {
@@ -776,6 +810,16 @@ namespace Tarinoi
 
                 lineCandidates++;
 
+                // shown_once: drop a card the player has already seen. Checked before
+                // the input condition so a spent option costs nothing to evaluate.
+                if (IsSpentShownOnce(card, targetId))
+                {
+                    TarinoiLog.Debug($"TarinoiRuntime: card '{targetId}' is shown_once and has "
+                                     + "already been seen — leaving it out of the choices.");
+                    shownOnceFiltered++;
+                    continue;
+                }
+
                 var condition = Str(Obj(card, "input_pin")?["condition"]);
                 if (condition.Length > 0 && !EvalGuarded(condition, $"input_pin on card '{targetId}'"))
                 {
@@ -787,7 +831,17 @@ namespace Tarinoi
 
             if (choices.Count == 0)
             {
-                if (lineCandidates > 0)
+                // Every way of running out of continuations is reported the same way;
+                // only the message differs, so the cause is identifiable.
+                if (shownOnceFiltered > 0)
+                {
+                    TarinoiLog.Error($"TarinoiRuntime: nothing follows card '{sourceCardId}' — of "
+                                     + $"{lineCandidates} possible continuation(s), {shownOnceFiltered} "
+                                     + "were shown_once cards the player has already seen and the rest "
+                                     + "were ruled out by their conditions. Ending the dialogue. Give the "
+                                     + "card a fallback option without shown_once to keep it reachable.");
+                }
+                else if (lineCandidates > 0)
                 {
                     TarinoiLog.Error($"TarinoiRuntime: nothing follows card '{sourceCardId}' — all "
                                      + $"{lineCandidates} possible continuation(s) were ruled out by their "
@@ -1288,5 +1342,15 @@ namespace Tarinoi
         /// card fields such as <c>input_pin</c> are stored as null when unused.
         /// </summary>
         static JObject Obj(JObject parent, string key) => parent?[key] as JObject;
+
+        /// <summary>
+        /// Reads an optional boolean card flag. Anything that is not an explicit JSON
+        /// <c>true</c> — missing, null, or another type — reads as false.
+        /// </summary>
+        static bool Flag(JObject card, string key)
+        {
+            var token = card?[key];
+            return token != null && token.Type == JTokenType.Boolean && (bool)token;
+        }
     }
 }

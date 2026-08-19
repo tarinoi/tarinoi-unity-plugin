@@ -76,8 +76,9 @@ namespace Tarinoi
         public JObject Card { get; internal set; }
 
         /// <summary>
-        /// Whether the player has taken this option before. Always false unless a
-        /// <see cref="IHistoryStore"/> is set.
+        /// Whether the player has seen this card before. Always false unless a
+        /// <see cref="IHistoryStore"/> is set, or the card was seen earlier in the
+        /// dialogue currently running.
         /// </summary>
         public bool Visited { get; internal set; }
 
