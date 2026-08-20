@@ -50,7 +50,7 @@ Add the OpenUPM scoped registry to `Packages/manifest.json`:
 
 ## Getting started
 
-**https://tarinoi.app/docs/plugins/unity** — the full guide: configuration, bindings,
+**https://tarinoi.app/docs/plugins/unity.html** — the full guide: configuration, bindings,
 events, trigger components, shipping a build, and troubleshooting.
 
 Import the **Quickstart** sample from the Package Manager window for a scene that plays
@@ -59,8 +59,8 @@ dialogue with a place to register your own bindings.
 Related:
 
 - [What the plugins do and don't do](https://tarinoi.app/docs/plugins/)
-- [Writing your own integration](https://tarinoi.app/docs/plugins/writing_your_own) — the engine-agnostic data contract
-- [Adapting a plugin](https://tarinoi.app/docs/plugins/adapting) — forking, porting, and the traps we hit
+- [Writing your own integration](https://tarinoi.app/docs/plugins/writing_your_own.html) — the engine-agnostic data contract
+- [Adapting a plugin](https://tarinoi.app/docs/plugins/adapting.html) — forking, porting, and the traps we hit
 
 ## License
 

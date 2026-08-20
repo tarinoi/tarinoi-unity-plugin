@@ -15,7 +15,7 @@
     "name": "Tarinoi",
     "url": "https://tarinoi.com"
   },
-  "documentationUrl": "https://tarinoi.app/docs/plugins/unity",
+  "documentationUrl": "https://tarinoi.app/docs/plugins/unity.html",
   "changelogUrl": "https://github.com/tarinoi/tarinoi-unity-plugin/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/tarinoi/tarinoi-unity-plugin/blob/main/LICENSE.md",
   "repository": {
