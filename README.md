@@ -11,25 +11,9 @@ Requires **Unity 6000.0** or newer.
 
 ## Installation
 
-Tarinoi is distributed through [OpenUPM](https://openupm.com). Install the OpenUPM
-CLI once:
-
-```bash
-npm install -g openupm-cli
-```
-
-Then, from your Unity project folder:
-
-```bash
-openupm add com.tarinoi.unity
-```
-
-That pulls in the SQLite dependency and its native binaries automatically.
-
-<details>
-<summary>Manual installation without the CLI</summary>
-
-Add the OpenUPM scoped registry to `Packages/manifest.json`:
+The package installs from this repository's Git URL. Its SQLite dependency lives on
+[OpenUPM](https://openupm.com), so that registry goes in alongside it — add both to
+`Packages/manifest.json`:
 
 ```json
 {
@@ -37,14 +21,46 @@ Add the OpenUPM scoped registry to `Packages/manifest.json`:
     {
       "name": "package.openupm.com",
       "url": "https://package.openupm.com",
-      "scopes": ["com.tarinoi", "com.gilzoide"]
+      "scopes": ["com.gilzoide"]
     }
   ],
   "dependencies": {
-    "com.tarinoi.unity": "0.1.0"
+    "com.tarinoi.unity": "https://github.com/tarinoi/tarinoi-unity-plugin.git"
   }
 }
 ```
+
+Unity resolves the rest: `com.gilzoide.sqlite-net` from the registry above, and
+`com.unity.nuget.newtonsoft-json` and `com.unity.ugui` from Unity's own.
+
+**The scoped registry is not optional.** `com.gilzoide.sqlite-net` supplies SQLite and
+its native libraries for every platform. Installing from a Git URL does not change how
+dependencies are resolved — without that entry, Unity cannot find it and the install
+fails.
+
+<details>
+<summary>Installing through the Package Manager window instead</summary>
+
+Add the scoped registry under **Edit → Project Settings → Package Manager** first, then
+use **Window → Package Manager → + → Install package from git URL**:
+
+```
+https://github.com/tarinoi/tarinoi-unity-plugin.git
+```
+
+</details>
+
+<details>
+<summary>Pinning to a specific version</summary>
+
+A bare Git URL tracks the default branch, so a later **Update** can pull changes you have
+not reviewed. Append a tag or commit hash to pin it:
+
+```json
+"com.tarinoi.unity": "https://github.com/tarinoi/tarinoi-unity-plugin.git#<tag-or-commit>"
+```
+
+Worth doing while the package is pre-1.0 and the API is still moving.
 
 </details>
 
