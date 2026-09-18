@@ -37,7 +37,7 @@ namespace Tarinoi.Editor.Codegen
                     Name = row.Identifier,
                     Args = ArgNames(row.Payload["function_args"] as JArray),
                     Returns = Str(row.Payload["function_returns"]),
-                    Effect = Str(row.Payload["effect"]),
+                    Effect = Str(row.Payload["function_effect"]),
                 });
             }
 

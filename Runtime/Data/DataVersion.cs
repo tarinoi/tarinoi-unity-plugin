@@ -24,7 +24,7 @@ namespace Tarinoi.Data
     /// </remarks>
     public sealed class DataVersion
     {
-        public const string SupportedVersion = "1.0.0";
+        public const string SupportedVersion = "2.0.0";
 
         /// <summary>Version string → "" (compatible) or the fatal error message.</summary>
         readonly Dictionary<string, string> _logged = new Dictionary<string, string>();

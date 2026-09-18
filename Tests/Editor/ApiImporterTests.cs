@@ -76,7 +76,7 @@ namespace Tarinoi.Tests
         static string Doc(string documentId, string collectionId = "col1",
             string layerId = LayerFilter.MainLayer, string documentType = "card",
             long updateKey = 1, bool tombstone = false, bool archived = false, bool moved = false,
-            string dataVersion = "1.0.0", string identifier = null, string payload = "{\"a\":1}")
+            string dataVersion = "2.0.0", string identifier = null, string payload = "{\"a\":1}")
         {
             var o = new JObject
             {
@@ -477,7 +477,7 @@ namespace Tarinoi.Tests
             UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Error,
                 new System.Text.RegularExpressions.Regex("MAJOR data format mismatch"));
 
-            var handler = new FakeHandler().Respond(Doc("d1", dataVersion: "2.0.0"));
+            var handler = new FakeHandler().Respond(Doc("d1", dataVersion: "1.0.0"));
             var result = Sync(handler, _fixture.Db);
 
             Assert.IsFalse(result.Success);
@@ -509,7 +509,7 @@ namespace Tarinoi.Tests
             UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Warning,
                 new System.Text.RegularExpressions.Regex("minor data format mismatch"));
 
-            var result = Sync(new FakeHandler().Respond(Doc("d1", dataVersion: "1.1.0")), _fixture.Db);
+            var result = Sync(new FakeHandler().Respond(Doc("d1", dataVersion: "2.1.0")), _fixture.Db);
 
             Assert.IsTrue(result.Success, result.Error);
             Assert.AreEqual(1, result.Stats.DocumentsUpserted);

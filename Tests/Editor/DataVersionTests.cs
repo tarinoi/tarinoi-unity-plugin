@@ -42,21 +42,21 @@ namespace Tarinoi.Tests
         [Test]
         public void PatchMismatchIsNotFatal()
         {
-            Assert.AreEqual("", _dv.Check("1.0.1"), "patch mismatch should not be fatal");
+            Assert.AreEqual("", _dv.Check("2.0.1"), "patch mismatch should not be fatal");
         }
 
         [Test]
         public void MinorMismatchIsNotFatal()
         {
             LogAssert.Expect(LogType.Warning, new Regex("minor data format mismatch"));
-            Assert.AreEqual("", _dv.Check("1.1.0"), "minor mismatch should not be fatal");
+            Assert.AreEqual("", _dv.Check("2.1.0"), "minor mismatch should not be fatal");
         }
 
         [Test]
         public void MajorMismatchIsFatal()
         {
             LogAssert.Expect(LogType.Error, MajorMismatch);
-            Assert.AreNotEqual("", _dv.Check("2.0.0"),
+            Assert.AreNotEqual("", _dv.Check("1.0.0"),
                 "major mismatch must return a non-empty fatal error");
         }
 
@@ -83,8 +83,8 @@ namespace Tarinoi.Tests
             // error is expected; a second would be an unexpected log and fail the test.
             LogAssert.Expect(LogType.Error, MajorMismatch);
 
-            var first = _dv.Check("2.0.0");
-            var second = _dv.Check("2.0.0");
+            var first = _dv.Check("1.0.0");
+            var second = _dv.Check("1.0.0");
 
             Assert.AreNotEqual("", first);
             Assert.AreNotEqual("", second);
