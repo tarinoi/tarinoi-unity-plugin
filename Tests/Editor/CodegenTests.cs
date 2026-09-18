@@ -290,6 +290,7 @@ namespace Tarinoi.Tests
             var code = CodeEmitter.Variables(model, "proj");
 
             StringAssert.Contains("public partial class PlayerVariables : ITarinoiVariables", code);
+            StringAssert.Contains("public const string Collection = \"player\";", code);
             StringAssert.Contains("public double Health = 100d;", code);
             StringAssert.Contains("public bool HasKey = false;", code);
             StringAssert.Contains("case \"health\": return Health;", code);
@@ -437,7 +438,7 @@ namespace Tarinoi.Tests
         {
             SeedManifest("col1", "global");
             SeedDecl("function-declaration", "f1", "Check",
-                "{\"function_returns\":\"boolean\",\"effect\":\"mutation\","
+                "{\"function_returns\":\"boolean\",\"function_effect\":\"mutation\","
                 + "\"function_args\":[{\"arg_name\":\"skill\"},{\"arg_name\":\"dc\"}]}");
 
             var fn = BindingCodegen.Load(_fixture.Db).Functions["global"].Single();

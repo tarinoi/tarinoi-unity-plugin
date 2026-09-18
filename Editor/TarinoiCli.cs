@@ -154,7 +154,7 @@ namespace Tarinoi.Editor
                     {
                         var model = BindingCodegen.Load(db);
                         if (!BindingCodegen.Write(model, settings.codegenOutputPath, settings.ProjectId,
-                                settings.codegenAsmdef))
+                                settings.codegenAsmdef, TarinoiMenu.ImplDirectory(settings)))
                         {
                             Fail("could not write the generated bindings.");
                             return;

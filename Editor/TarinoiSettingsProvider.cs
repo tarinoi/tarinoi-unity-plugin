@@ -129,6 +129,8 @@ namespace Tarinoi.Editor
             EditorGUILayout.LabelField("Generated bindings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serialized.FindProperty("codegenOutputPath"),
                 new GUIContent("Output folder"));
+            EditorGUILayout.PropertyField(serialized.FindProperty("codegenImplPath"),
+                new GUIContent("Implementations folder"));
             EditorGUILayout.PropertyField(serialized.FindProperty("codegenOnSync"),
                 new GUIContent("Regenerate after sync"));
             EditorGUILayout.PropertyField(serialized.FindProperty("codegenAsmdef"),

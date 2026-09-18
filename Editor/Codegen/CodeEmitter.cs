@@ -292,6 +292,12 @@ namespace Tarinoi.Editor.Codegen
             w.Line($"public partial class {className} : ITarinoiVariables");
             w.Open();
 
+            // The identifier to bind under, so a game — or the quickstart — can bind
+            // every generated collection without naming each class.
+            w.Doc("The collection identifier this class is bound under.");
+            w.Line($"public const string Collection = {CodeNames.StringLiteral(collection)};");
+            w.Line();
+
             foreach (var v in ordered)
             {
                 w.Doc($"<c>Var.{collection}.{v.Name}</c>");
@@ -460,7 +466,7 @@ namespace Tarinoi.Editor.Codegen
         // -------------------------------------------------------------------------
 
         /// <summary>Minimal indenting source writer.</summary>
-        sealed class Writer
+        internal sealed class Writer
         {
             readonly StringBuilder _builder = new StringBuilder();
             int _depth;

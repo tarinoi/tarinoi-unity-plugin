@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Core functions.** Regenerate Bindings now scaffolds `TarinoiCoreFunctions.cs` —
+  the reference implementation of Tarinoi's built-in `Fn.tarinoi.*` set (flags,
+  counters, text, comparisons) with the same semantics as in-app playback — into
+  the implementations folder (`codegenImplPath`, default `Assets/Tarinoi`). It is
+  written once and never overwritten: the file is yours to adapt to your own
+  variable storage. Check Bindings reports a scaffold that is out of date or
+  missing a function.
+- Generated variables classes carry a `Collection` constant naming the
+  collection they are bound under.
+- `GeneratedBindings.BindDefaults` binds the generated variables classes and the
+  scaffolded core functions for any collection left unbound; `TarinoiQuickstart`
+  calls it after `SetupBindings`, so synced content that only uses core
+  functions plays with no code.
 - Initial package scaffolding: UPM manifest, assembly definitions, and test harness.
 - `TarinoiLog` — log-level-gated logging.
 - `DataVersion` — semantic version compatibility gate for synced documents.

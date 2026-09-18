@@ -25,6 +25,11 @@ namespace Tarinoi.Ui
     ///     }
     /// }
     /// </code>
+    /// Anything you leave unbound that the generated code can supply — a generated
+    /// variables class, the scaffolded core functions — is bound for you afterwards, so
+    /// content that only uses <c>Fn.tarinoi.*</c> plays without any of this.
+    /// </para>
+    /// <para>
     /// This is a starting point, not a shipping UI — see <see cref="QuickstartUi"/>.
     /// </para>
     /// </remarks>
@@ -54,6 +59,7 @@ namespace Tarinoi.Ui
             }
 
             SetupBindings();
+            BindGeneratedDefaults();
             BuildInterface();
 
             Runtime.LineReady += _ => ShowDialogue();
@@ -84,6 +90,20 @@ namespace Tarinoi.Ui
         /// </summary>
         protected virtual void SetupBindings()
         {
+        }
+
+        /// <summary>
+        /// Binds what the generated code can supply on its own — the generated variable
+        /// classes and the scaffolded core functions — for every collection
+        /// <see cref="SetupBindings"/> left unbound. Override to opt out.
+        /// </summary>
+        /// <remarks>See <see cref="Bindings.GeneratedBindings"/> for what this looks for.</remarks>
+        protected virtual void BindGeneratedDefaults()
+        {
+            foreach (var binding in Bindings.GeneratedBindings.BindDefaults(Runtime.Registry))
+            {
+                TarinoiLog.Debug($"Quickstart: bound {binding} from the generated bindings.");
+            }
         }
 
         void BuildInterface()

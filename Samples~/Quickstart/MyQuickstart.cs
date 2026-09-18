@@ -22,6 +22,12 @@ namespace TarinoiSample
         /// identifier</b> in Tarinoi, not its display label. Authored expressions say
         /// <c>Fn.global.…</c>, so that is what the binding has to be registered under; a
         /// mismatch shows up as an unbound-collection error when the dialogue runs.
+        /// <para>
+        /// Tarinoi's own core functions (<c>Fn.tarinoi.*</c>) are not bound here: once you
+        /// have synced and run <b>Regenerate Bindings</b>, the scaffolded
+        /// <c>TarinoiCoreFunctions</c> is picked up automatically, along with any generated
+        /// variables class you leave unbound.
+        /// </para>
         /// </remarks>
         protected override void SetupBindings()
         {

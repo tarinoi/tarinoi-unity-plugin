@@ -85,8 +85,14 @@ namespace Tarinoi.Editor.Codegen
         }
 
         /// <summary>
-        /// Writes the four generated files. Returns false if nothing could be written.
+        /// Writes the four generated files, and the core functions scaffold when the
+        /// project has the collection and no scaffold yet. Returns false if nothing could
+        /// be written.
         /// </summary>
+        /// <param name="implDirectory">
+        /// Where the game's own binding implementations live; the core functions
+        /// scaffold goes here. Null skips the scaffold.
+        /// </param>
         /// <param name="withAsmdef">
         /// Whether to write an assembly definition beside the generated code. Needed by
         /// projects that organise their own code with asmdefs: without one the generated
@@ -96,7 +102,7 @@ namespace Tarinoi.Editor.Codegen
         /// that keeps its code there.
         /// </param>
         public static bool Write(CodegenModel model, string outputDirectory, string projectId,
-            bool withAsmdef = false)
+            bool withAsmdef = false, string implDirectory = null)
         {
             try
             {
@@ -123,6 +129,11 @@ namespace Tarinoi.Editor.Codegen
                     File.Delete(asmdefPath);
                 }
 
+                if (implDirectory != null)
+                {
+                    ScaffoldCoreFunctions(model, implDirectory, projectId);
+                }
+
                 return true;
             }
             catch (Exception e)
@@ -130,6 +141,39 @@ namespace Tarinoi.Editor.Codegen
                 TarinoiLog.Error($"Codegen: could not write to '{outputDirectory}': {e.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Writes the reference implementation of <c>Fn.tarinoi.*</c> into the impl
+        /// directory if the project has the collection and no scaffold exists yet. Never
+        /// overwrites: the file belongs to the game once written. Returns whether it wrote.
+        /// </summary>
+        public static bool ScaffoldCoreFunctions(CodegenModel model, string implDirectory, string projectId)
+        {
+            if (!model.Functions.TryGetValue(CoreFunctionsEmitter.Collection, out var decls))
+            {
+                return false;
+            }
+
+            var path = Path.Combine(implDirectory, CoreFunctionsEmitter.FileName);
+            if (File.Exists(path))
+            {
+                return false;
+            }
+
+            var source = CoreFunctionsEmitter.Render(decls, projectId, out var unknown);
+            foreach (var name in unknown)
+            {
+                TarinoiLog.Warn($"Codegen: Fn.{CoreFunctionsEmitter.Collection}.{name} is not a core "
+                                + $"function this package knows — stubbed in {path}; implement it "
+                                + "or update the package.");
+            }
+
+            Directory.CreateDirectory(implDirectory);
+            File.WriteAllText(path, source);
+            TarinoiLog.Info($"Codegen: scaffolded core functions {CoreFunctionsEmitter.Version} to "
+                            + $"{path} — the file is yours to edit.");
+            return true;
         }
 
         // -------------------------------------------------------------------------

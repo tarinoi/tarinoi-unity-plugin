@@ -35,6 +35,10 @@ namespace Tarinoi
         [Tooltip("Where generated binding classes are written.")]
         public string codegenOutputPath = "Assets/Tarinoi/Generated";
 
+        [Tooltip("Where your own binding implementations live. The core functions reference "
+                 + "implementation is scaffolded here, once, for you to edit.")]
+        public string codegenImplPath = "Assets/Tarinoi";
+
         [Tooltip("Regenerate bindings automatically after every successful sync.")]
         public bool codegenOnSync;
 

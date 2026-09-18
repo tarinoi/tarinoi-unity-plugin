@@ -137,7 +137,8 @@ namespace Tarinoi.Editor
                 return;
             }
 
-            if (!BindingCodegen.Write(model, output, settings.ProjectId, settings.codegenAsmdef))
+            if (!BindingCodegen.Write(model, output, settings.ProjectId, settings.codegenAsmdef,
+                    ImplDirectory(settings)))
             {
                 return;
             }
@@ -255,6 +256,22 @@ namespace Tarinoi.Editor
 
                 action(db, settings);
             }
+        }
+
+        /// <summary>
+        /// The folder the game's own binding implementations live in — where the core
+        /// functions scaffold goes. Falls back to the parent of the generated folder when
+        /// the setting is blank, so the scaffold lands beside the code that derives from it.
+        /// </summary>
+        public static string ImplDirectory(TarinoiSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings.codegenImplPath))
+            {
+                return settings.codegenImplPath;
+            }
+
+            var parent = System.IO.Path.GetDirectoryName(settings.codegenOutputPath?.TrimEnd('/', '\\'));
+            return string.IsNullOrEmpty(parent) ? "Assets/Tarinoi" : parent;
         }
 
         static void Complain(string message)

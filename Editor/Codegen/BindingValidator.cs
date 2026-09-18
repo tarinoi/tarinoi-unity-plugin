@@ -39,8 +39,78 @@ namespace Tarinoi.Editor.Codegen
 
             ValidateFunctions(model, generated, issues);
             ValidateVariables(model, generated, issues);
+            ValidateCoreFunctions(model, generated, issues);
 
             return issues;
+        }
+
+        /// <summary>
+        /// Checks the scaffolded core functions against the synced collection and the
+        /// package's own version of the set. Nothing here is breaking: the scaffold is the
+        /// game's code, and a function it does not override still falls through to the
+        /// generated base class stub.
+        /// </summary>
+        static void ValidateCoreFunctions(CodegenModel model, IReadOnlyDictionary<string, Type> generated,
+            List<BindingIssue> issues)
+        {
+            var hasCollection = model.Functions.TryGetValue(CoreFunctionsEmitter.Collection, out var decls);
+            var scaffold = FindCoreFunctionsScaffold(generated);
+            var name = CoreFunctionsEmitter.ClassName;
+
+            if (scaffold == null)
+            {
+                if (hasCollection)
+                {
+                    issues.Add(Addition($"'{CoreFunctionsEmitter.Collection}' is the core function set "
+                                        + $"but no {name} is compiled yet. Regenerate Bindings "
+                                        + "scaffolds the reference implementation."));
+                }
+
+                return;
+            }
+
+            if (!hasCollection)
+            {
+                issues.Add(Addition($"{scaffold.FullName} exists but the project has no "
+                                    + $"'{CoreFunctionsEmitter.Collection}' collection. Delete it, or "
+                                    + "recreate the core functions in Tarinoi."));
+                return;
+            }
+
+            var version = CoreFunctionsEmitter.CompiledVersion(scaffold);
+            if (version != CoreFunctionsEmitter.Version)
+            {
+                issues.Add(Addition($"{scaffold.FullName} was scaffolded from core functions "
+                                    + $"'{version}'; this package scaffolds {CoreFunctionsEmitter.Version}. "
+                                    + "Delete it to re-scaffold, or merge the changes by hand."));
+            }
+
+            foreach (var fn in decls)
+            {
+                var member = CodeNames.Member(fn.Name).TrimStart('@');
+                if (!CoreFunctionsEmitter.Overrides(scaffold, member))
+                {
+                    issues.Add(Addition($"{scaffold.FullName} does not override {member}, so "
+                                        + $"Fn.{CoreFunctionsEmitter.Collection}.{fn.Name} hits the "
+                                        + "not-implemented stub. Add it, or delete the file to re-scaffold."));
+                }
+            }
+        }
+
+        /// <summary>
+        /// The compiled scaffold: a concrete class deriving from the generated base for
+        /// the core collection, whatever it is called or wherever it was moved to.
+        /// </summary>
+        public static Type FindCoreFunctionsScaffold(IReadOnlyDictionary<string, Type> generated)
+        {
+            var baseName = CodeNames.CollectionClass(CoreFunctionsEmitter.Collection, "Functions");
+            if (!generated.TryGetValue(baseName, out var baseType))
+            {
+                return null;
+            }
+
+            return AllTypes()
+                .FirstOrDefault(t => !t.IsAbstract && t != baseType && baseType.IsAssignableFrom(t));
         }
 
         static void ValidateFunctions(CodegenModel model, IReadOnlyDictionary<string, Type> generated,
@@ -145,10 +215,22 @@ namespace Tarinoi.Editor.Codegen
         }
 
         /// <summary>Generated classes currently compiled into the project, by short name.</summary>
-        static Dictionary<string, Type> GeneratedTypes()
+        public static Dictionary<string, Type> GeneratedTypes()
         {
             var types = new Dictionary<string, Type>(StringComparer.Ordinal);
+            foreach (var type in AllTypes())
+            {
+                if (type.Namespace == CodeEmitter.Namespace)
+                {
+                    types[type.Name] = type;
+                }
+            }
 
+            return types;
+        }
+
+        static IEnumerable<Type> AllTypes()
+        {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type[] assemblyTypes;
@@ -168,14 +250,9 @@ namespace Tarinoi.Editor.Codegen
 
                 foreach (var type in assemblyTypes)
                 {
-                    if (type.Namespace == CodeEmitter.Namespace)
-                    {
-                        types[type.Name] = type;
-                    }
+                    yield return type;
                 }
             }
-
-            return types;
         }
 
         /// <summary>
