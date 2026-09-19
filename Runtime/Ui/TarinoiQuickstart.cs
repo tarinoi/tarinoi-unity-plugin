@@ -44,8 +44,7 @@ namespace Tarinoi.Ui
 
         StartCardPicker _picker;
         DialogueStrip _strip;
-        GameObject _pickerRoot;
-        GameObject _stripRoot;
+        QuickstartViews _views;
 
         async void Start()
         {
@@ -61,17 +60,14 @@ namespace Tarinoi.Ui
             SetupBindings();
             BindGeneratedDefaults();
             BuildInterface();
-
-            Runtime.LineReady += _ => ShowDialogue();
-            Runtime.ChoicesReady += _ => ShowDialogue();
-            Runtime.DialogueEnded += ShowPicker;
+            _views.Wire(Runtime);
 
             if (syncOnStart)
             {
                 await Runtime.SyncAsync();
             }
 
-            ShowPicker();
+            _views.ShowPicker();
         }
 
         void OnDestroy()
@@ -113,36 +109,12 @@ namespace Tarinoi.Ui
             _picker = new GameObject("Picker", typeof(RectTransform))
                 .AddComponent<StartCardPicker>();
             _picker.Build(Runtime, canvas.transform);
-            _pickerRoot = _picker.transform.parent.gameObject;
 
             _strip = new GameObject("Strip", typeof(RectTransform)).AddComponent<DialogueStrip>();
             _strip.Build(Runtime, canvas.transform);
-            _stripRoot = _strip.transform.parent.gameObject;
-        }
 
-        void ShowPicker()
-        {
-            if (_stripRoot != null)
-            {
-                _stripRoot.SetActive(false);
-            }
-
-            if (_pickerRoot != null)
-            {
-                _pickerRoot.SetActive(true);
-            }
-        }
-
-        void ShowDialogue()
-        {
-            if (_stripRoot == null || _stripRoot.activeSelf)
-            {
-                return;
-            }
-
-            _strip.Clear();
-            _pickerRoot.SetActive(false);
-            _stripRoot.SetActive(true);
+            _views = new QuickstartViews(_picker.transform.parent.gameObject,
+                _strip.transform.parent.gameObject, _strip);
         }
     }
 }

@@ -85,6 +85,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documents.
 
 ### Fixed
+- The quickstart showed a blank screen when a dialogue started. It cleared the
+  transcript on the first line's arrival, after the strip had already appended
+  that line; the transcript is now cleared when returning to the entry-point
+  picker instead. The view switching lives in `QuickstartViews`, which the
+  play-mode tests drive.
+- The entry-point list no longer offers a blank entry: the query matched the
+  `start` card *template* (which carries `base_ref` too) alongside the start
+  cards. Only `card` documents are listed now.
 - Several non-player lines passing their gates at once were presented as a
   numbered menu. A non-player set is not a menu: the author picks the line by
   condition, so only the first passing line (by geo.y) is shown, as in-app

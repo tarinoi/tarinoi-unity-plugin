@@ -138,6 +138,9 @@ namespace Tarinoi.Tests
                 payload: "{\"base_ref\":\"start\",\"data\":{\"label\":\"Side quest\"}}");
             _fixture.InsertDocument("line1", "col1",
                 payload: "{\"base_ref\":\"line\",\"data\":{\"label\":\"Not a start\"}}");
+            // A card *template* for the start base carries base_ref too, but is not a card.
+            _fixture.InsertDocument("start_template", "tarinoi:card-templates", documentType: "card-template",
+                payload: "{\"base_ref\":\"start\",\"data\":{}}");
 
             var cards = Await(_store.QueryStartCardsAsync());
 

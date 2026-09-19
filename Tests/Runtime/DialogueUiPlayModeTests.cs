@@ -139,6 +139,36 @@ namespace Tarinoi.Tests
         }
 
         [UnityTest]
+        public IEnumerator TheQuickstartViewsKeepTheFirstLineWhenSwitchingToTheStrip()
+        {
+            // Wired the way TarinoiQuickstart wires them: the strip subscribed to the
+            // runtime first (in Build), the views afterwards. A clear on the way in would
+            // run after the strip appended the line and leave a blank screen.
+            var pickerRoot = new GameObject("PickerRoot");
+            pickerRoot.transform.SetParent(_host.transform);
+            var views = new QuickstartViews(pickerRoot, _strip.transform.parent.gameObject, _strip);
+            views.Wire(_runtime);
+            views.ShowPicker();
+
+            _store.Cards["c1"] = Line("First line survives");
+            yield return _runtime.StartDialogueAsync("col1", "c1").AsCoroutine();
+            yield return null;
+
+            Assert.IsFalse(pickerRoot.activeSelf, "the picker gives way to the strip");
+            Assert.IsTrue(_strip.transform.parent.gameObject.activeSelf);
+            Assert.IsTrue(Texts().Any(t => t.text == "First line survives"),
+                "the line shown when the strip appeared must still be there");
+
+            // Ending the dialogue brings the picker back and clears the stale transcript.
+            yield return _runtime.AdvanceAsync().AsCoroutine();
+            yield return null;
+            yield return null;
+
+            Assert.IsTrue(pickerRoot.activeSelf);
+            Assert.IsFalse(Texts().Any(t => t.text == "First line survives"));
+        }
+
+        [UnityTest]
         public IEnumerator ClickingContinueAdvancesTheDialogue()
         {
             _store.Cards["c1"] = Line("First", "npc", "default>>c2");
