@@ -852,9 +852,7 @@ namespace Tarinoi
                 return;
             }
 
-            _choices = SortByGeometry(choices);
-
-            WarnAboutMixedChoiceSets(_choices, sourceCardId);
+            _choices = SelectByKind(SortByGeometry(choices), sourceCardId);
 
             if (_choices.Count == 1)
             {
@@ -904,34 +902,59 @@ namespace Tarinoi
                 : double.PositiveInfinity;
         }
 
-        void WarnAboutMixedChoiceSets(List<DialogueChoice> choices, string sourceCardId)
+        /// <summary>
+        /// Decides what a look-ahead set is, as in-app playback does: any player line makes
+        /// it a choice set, whose player lines are offered and whose non-player lines are an
+        /// authoring error and dropped; otherwise it is a non-player set, and only the first
+        /// line whose condition passed is shown — the conditions are how the author picks the
+        /// line, not a menu.
+        /// </summary>
+        List<DialogueChoice> SelectByKind(List<DialogueChoice> sorted, string sourceCardId)
         {
-            var npcCount = choices.Count(c => !IsPcCard(c.Card));
-            if (npcCount > 0 && npcCount < choices.Count)
-            {
-                TarinoiLog.Warn($"TarinoiRuntime: card '{sourceCardId}' leads to both player and "
-                                + $"non-player lines; the {npcCount} non-player line(s) cannot be reached.");
-                return;
-            }
+            var pc = sorted.Where(c => IsPcCard(c.Card)).ToList();
+            var npc = sorted.Where(c => !IsPcCard(c.Card)).ToList();
+            List<DialogueChoice> kept;
 
-            // An all-NPC set is chosen between by condition, so duplicate or missing
-            // conditions mean the later lines are unreachable.
-            if (npcCount != choices.Count || choices.Count <= 1)
+            if (pc.Count > 0)
             {
-                return;
-            }
-
-            var seen = new HashSet<string>();
-            foreach (var choice in choices)
-            {
-                var condition = Str(Obj(choice.Card, "input_pin")?["condition"]);
-                if (!seen.Add(condition))
+                if (npc.Count > 0)
                 {
-                    TarinoiLog.Warn($"TarinoiRuntime: card '{sourceCardId}' leads to several lines "
-                                    + "sharing the same condition — only the first can be reached.");
-                    return;
+                    TarinoiLog.Warn($"TarinoiRuntime: card '{sourceCardId}' leads to both player and "
+                                    + $"non-player lines; the {npc.Count} non-player line(s) are dropped.");
                 }
+
+                kept = pc;
             }
+            else
+            {
+                if (npc.Count > 1)
+                {
+                    // Duplicate or missing conditions mean the later lines are unreachable.
+                    var seen = new HashSet<string>();
+                    foreach (var choice in npc)
+                    {
+                        var condition = Str(Obj(choice.Card, "input_pin")?["condition"]);
+                        if (!seen.Add(condition))
+                        {
+                            TarinoiLog.Warn($"TarinoiRuntime: card '{sourceCardId}' leads to several lines "
+                                            + "sharing the same condition — only the first can be reached.");
+                            break;
+                        }
+                    }
+
+                    TarinoiLog.Debug($"TarinoiRuntime: {npc.Count} non-player lines pass from card "
+                                     + $"'{sourceCardId}' — showing the first, '{npc[0].CardId}'.");
+                }
+
+                kept = new List<DialogueChoice> { npc[0] };
+            }
+
+            for (var i = 0; i < kept.Count; i++)
+            {
+                kept[i].Index = i;
+            }
+
+            return kept;
         }
 
         /// <summary>

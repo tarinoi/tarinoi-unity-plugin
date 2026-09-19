@@ -501,18 +501,73 @@ namespace Tarinoi.Tests
             Assert.AreEqual(1, _h.Lines.Count);
         }
 
+        // =====================================================================
+        // What kind of set it is: player lines are a menu, non-player lines a first match
+        // =====================================================================
+
         [Test]
-        public void AMixedChoiceSetWarnsThatSomeLinesAreUnreachable()
+        public void SeveralNpcLinesPassingTheirGatesShowOnlyTheFirst()
         {
-            _h.SeedEntity("hero", true).SeedEntity("narrator", false).Configure();
-            _h.Store.Add("c1", CardBuilder.Blank().To("pc", "npc"));
-            _h.Store.Add("pc", CardBuilder.Line("Mine").Mode("pc").Geo(0));
-            _h.Store.Add("npc", CardBuilder.Line("Theirs").Mode("npc").Geo(10));
+            // Two non-player lines whose conditions both pass are not a menu: the author
+            // picks the line by condition, and the topmost match is the one the player hears.
+            _h.Configure();
+            BindSpy();
+            _h.Store.Add("c1", CardBuilder.Blank().To("a", "b", "c"));
+            _h.Store.Add("a", CardBuilder.Line("You told me Godot").Mode("npc").Geo(0).Condition("Fn.g.True()").To("flow:end"));
+            _h.Store.Add("b", CardBuilder.Line("You have not visited").Mode("npc").Geo(10).Condition("Fn.g.True()").To("flow:end"));
+            _h.Store.Add("c", CardBuilder.Line("Fallback").Mode("npc").Geo(20).To("flow:end"));
+
+            _h.Start("c1");
+
+            Assert.IsEmpty(_h.ChoiceSets, "no choice UI for a non-player set");
+            Assert.AreEqual(1, _h.Lines.Count);
+            Assert.AreEqual("You told me Godot", _h.LastLine.Line);
+            Assert.AreEqual(DialogueState.NpcLine, _h.Runtime.State);
+        }
+
+        [Test]
+        public void ANpcSetSkipsAFailingLineToTheNextMatch()
+        {
+            _h.Configure();
+            BindSpy();
+            _h.Store.Add("c1", CardBuilder.Blank().To("a", "b"));
+            _h.Store.Add("a", CardBuilder.Line("Gated").Mode("npc").Geo(0).Condition("Fn.g.False()").To("flow:end"));
+            _h.Store.Add("b", CardBuilder.Line("Fallback").Mode("npc").Geo(10).To("flow:end"));
+
+            _h.Start("c1");
+
+            Assert.AreEqual("Fallback", _h.LastLine.Line);
+        }
+
+        [Test]
+        public void ANpcSetDecidesByTheSpeakerWhenLineModeIsInherited()
+        {
+            _h.SeedEntity("narrator", false).Configure();
+            _h.Store.Add("c1", CardBuilder.Blank().To("a", "b"));
+            _h.Store.Add("a", CardBuilder.Line("First").Mode("inherit").Entity("narrator").Geo(0).To("flow:end"));
+            _h.Store.Add("b", CardBuilder.Line("Second").Mode("inherit").Entity("narrator").Geo(10).To("flow:end"));
+
+            LogAssert.Expect(LogType.Warning, new Regex("sharing the same condition"));
+            _h.Start("c1");
+
+            Assert.IsEmpty(_h.ChoiceSets);
+            Assert.AreEqual("First", _h.LastLine.Line);
+        }
+
+        [Test]
+        public void AMixedSetOffersThePlayerLinesAndDropsTheNpcLines()
+        {
+            _h.Configure();
+            _h.Store.Add("c1", CardBuilder.Blank().To("a", "b", "c"));
+            _h.Store.Add("a", CardBuilder.Line("Say this").Mode("pc").Geo(0));
+            _h.Store.Add("b", CardBuilder.Line("Narration").Mode("npc").Geo(10));
+            _h.Store.Add("c", CardBuilder.Line("Or this").Mode("pc").Geo(20));
 
             LogAssert.Expect(LogType.Warning, new Regex("both player and non-player"));
             _h.Start("c1");
 
-            Assert.AreEqual(2, _h.Choices.Count);
+            CollectionAssert.AreEqual(new[] { "Say this", "Or this" }, LinesOf(_h.Choices));
+            Assert.AreEqual(1, _h.Choices[1].Index, "indices are contiguous after dropping");
         }
 
         // =====================================================================
@@ -1040,8 +1095,9 @@ namespace Tarinoi.Tests
             LogAssert.Expect(LogType.Warning, new Regex("sharing the same condition"));
             _h.Advance();   // through n1 to the hub
 
-            CollectionAssert.AreEqual(new[] { "Small talk", "More small talk" },
-                LinesOf(_h.Choices), "a displayed NPC line counts as seen");
+            // A non-player set shows its first eligible line; the spent n1 is no longer eligible.
+            Assert.IsEmpty(_h.ChoiceSets);
+            Assert.AreEqual("Small talk", _h.LastLine.Line, "a displayed NPC line counts as seen");
         }
 
         [Test]
