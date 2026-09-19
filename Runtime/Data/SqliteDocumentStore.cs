@@ -80,6 +80,26 @@ namespace Tarinoi.Data
             return rows.Count > 0 ? ParsePayload(rows[0].Payload, cardId) : null;
         }
 
+        public virtual async Task<LocatedCard> LocateCardAsync(string cardId)
+        {
+            if (Db == null || !Db.IsOpen || string.IsNullOrEmpty(cardId))
+            {
+                return null;
+            }
+
+            var rows = await QueryAsync<DocumentRow>(
+                "SELECT d.collection_id, d.payload FROM documents d "
+                + $"WHERE d.document_id = ? AND d.document_type = 'card' AND {Db.ActiveFilter}",
+                cardId);
+            if (rows.Count == 0)
+            {
+                return null;
+            }
+
+            var card = ParsePayload(rows[0].Payload, cardId);
+            return card == null ? null : new LocatedCard { CollectionId = rows[0].CollectionId, Card = card };
+        }
+
         public virtual Task<JObject> GetEntityAsync(string identifier)
         {
             return Task.FromResult(Entities?.GetEntity(identifier));

@@ -51,6 +51,18 @@ namespace Tarinoi.Data
         /// <summary>Returns a dialogue card's parsed payload, or null when it isn't found.</summary>
         Task<JObject> LoadCardAsync(string collectionId, string cardId);
 
+        /// <summary>
+        /// Finds a card by document id alone, when the collection is not known — a jump's
+        /// <c>data.target</c> is a bare document id and may point at another board.
+        /// Returns null when it isn't found.
+        /// </summary>
+        /// <remarks>
+        /// Has a default so that a custom store written before it existed still compiles;
+        /// that default finds nothing, and jumps then fail with a clear error, so a custom
+        /// store should implement it.
+        /// </remarks>
+        Task<LocatedCard> LocateCardAsync(string cardId) => Task.FromResult<LocatedCard>(null);
+
         /// <summary>Returns an entity's payload by identifier, or null when unknown.</summary>
         Task<JObject> GetEntityAsync(string identifier);
 

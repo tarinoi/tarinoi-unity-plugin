@@ -85,6 +85,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documents.
 
 ### Fixed
+- Jump cards are followed again. A jump's destination is its `data.target`
+  card-link — the target card's bare document id, possibly on another board —
+  not the `target_collection_id` / `target_card_id` pair the runtime expected
+  (a documentation error the app corrected on 2026-08-27). Reaching a jump used
+  to stop the dialogue with "does not say where to jump to".
+  `IDocumentStore` gains `LocateCardAsync(cardId)`, with a default that finds
+  nothing so existing custom stores still compile; implement it for jumps.
 - Generated function stubs now carry their `Effect:` remark. Codegen read the
   payload's `effect` key, which does not exist; the field is `function_effect`.
 - A bare `Var.collection.flag` used as a condition now reads the variable. In the

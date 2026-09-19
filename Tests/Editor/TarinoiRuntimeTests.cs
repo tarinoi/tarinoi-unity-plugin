@@ -130,16 +130,30 @@ namespace Tarinoi.Tests
         }
 
         [Test]
-        public void AJumpCardMovesToAnotherCollection()
+        public void AJumpCardFollowsItsTargetLinkToAnotherCollection()
         {
+            // A jump's destination is data.target — a bare document id, which may live on
+            // another board. Not a (collection, card) pair, as the package once assumed.
             _h.Configure();
-            _h.Store.Add("c1", CardBuilder.Of("jump").Jump("col2", "far"));
+            _h.Store.Add("c1", CardBuilder.Of("jump").Jump("far"));
             _h.Store.Add("far", CardBuilder.Line("Elsewhere").Mode("npc").To("flow:end"), "col2");
 
             _h.Start("c1");
 
             Assert.AreEqual("Elsewhere", _h.LastLine.Line);
             Assert.AreEqual("col2", _h.LastLine.CollectionId);
+        }
+
+        [Test]
+        public void AJumpCardWithADanglingTargetReportsAnError()
+        {
+            _h.Configure();
+            _h.Store.Add("c1", CardBuilder.Of("jump").Jump("nowhere"));
+
+            LogAssert.Expect(LogType.Error, new Regex("does not exist: 'nowhere'"));
+            _h.Start("c1");
+
+            Assert.AreEqual(1, _h.Errors.Count);
         }
 
         [Test]

@@ -36,6 +36,24 @@ namespace Tarinoi.Tests
         public Task<JObject> GetDocumentAsync(string documentId, string collectionId = null) =>
             LoadCardAsync(collectionId ?? "col1", documentId);
 
+        public Task<LocatedCard> LocateCardAsync(string cardId)
+        {
+            foreach (var entry in _cards)
+            {
+                var slash = entry.Key.IndexOf('/');
+                if (entry.Key.Substring(slash + 1) == cardId)
+                {
+                    LoadedCardIds.Add(cardId);
+                    return Task.FromResult(new LocatedCard
+                    {
+                        CollectionId = entry.Key.Substring(0, slash), Card = entry.Value,
+                    });
+                }
+            }
+
+            return Task.FromResult<LocatedCard>(null);
+        }
+
         public Task<JObject> GetEntityAsync(string identifier) =>
             Task.FromResult(_entities?.GetEntity(identifier));
 
@@ -150,10 +168,11 @@ namespace Tarinoi.Tests
             return this;
         }
 
-        public CardBuilder Jump(string collectionId, string cardId)
+        /// <summary>A jump's destination: the target card's bare document id.</summary>
+        public CardBuilder Jump(string cardId)
         {
             _card["base_ref"] = "jump";
-            return Data("target_collection_id", collectionId).Data("target_card_id", cardId);
+            return Data("target", cardId);
         }
 
         public JObject Build() => _card;

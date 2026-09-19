@@ -934,13 +934,17 @@ namespace Tarinoi
             }
         }
 
+        /// <summary>
+        /// A jump's destination is its one card-link property, <c>data.target</c>: the
+        /// target card's bare document id, with no collection component, and possibly on
+        /// another board. Locate it by id, then continue there.
+        /// </summary>
         async Task FollowJumpAsync(JObject card, string cardId)
         {
             var data = card["data"] as JObject;
-            var targetCollection = Str(data?["target_collection_id"]);
-            var targetCard = Str(data?["target_card_id"]);
+            var target = Str(data?["target"]);
 
-            if (targetCollection.Length == 0 || targetCard.Length == 0)
+            if (target.Length == 0)
             {
                 var message = $"Jump card '{cardId}' does not say where to jump to.";
                 TarinoiLog.Error("TarinoiRuntime: " + message);
@@ -948,8 +952,22 @@ namespace Tarinoi
                 return;
             }
 
-            _currentCollectionId = targetCollection;
-            await LoadAndProcessCardAsync(targetCollection, targetCard);
+            if (CheckLoop(target))
+            {
+                return;
+            }
+
+            var located = await DocumentStore.LocateCardAsync(target);
+            if (located == null)
+            {
+                var message = $"Jump card '{cardId}' points at a card that does not exist: '{target}'.";
+                TarinoiLog.Error("TarinoiRuntime: " + message);
+                DialogueError?.Invoke(message);
+                return;
+            }
+
+            _currentCollectionId = located.CollectionId;
+            await ProcessCardAsync(located.Card, target, located.CollectionId);
         }
 
         // -------------------------------------------------------------------------

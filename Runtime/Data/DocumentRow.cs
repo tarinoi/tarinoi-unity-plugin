@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using SQLite;
 
 namespace Tarinoi.Data
@@ -41,6 +42,15 @@ namespace Tarinoi.Data
         [Column("collection_name")] public string CollectionName { get; set; }
         [Column("collection_type")] public string CollectionType { get; set; }
         [Column("payload")] public string Payload { get; set; }
+    }
+
+    /// <summary>
+    /// A card found by document id alone, with the collection it turned out to live in.
+    /// </summary>
+    public sealed class LocatedCard
+    {
+        public string CollectionId;
+        public JObject Card;
     }
 
     /// <summary>A dialogue entry point, as listed by the start-card picker.</summary>
