@@ -6,8 +6,8 @@ game's own code, and play dialogue back through a small event-based runtime.
 
 Requires **Unity 6000.0** or newer.
 
-> **Status: early development.** The package is being built out; the API is not yet
-> stable and there is no tagged release. Watch `CHANGELOG.md`.
+> **Status: early development.** Version 0.2.0. The API is not yet stable and will change
+> before 1.0. Watch `CHANGELOG.md`.
 
 ## Installation
 
@@ -54,10 +54,10 @@ https://github.com/tarinoi/tarinoi-unity-plugin.git
 <summary>Pinning to a specific version</summary>
 
 A bare Git URL tracks the default branch, so a later **Update** can pull changes you have
-not reviewed. Append a tag or commit hash to pin it:
+not reviewed. Append a tag (or a commit hash) to pin it:
 
 ```json
-"com.tarinoi.unity": "https://github.com/tarinoi/tarinoi-unity-plugin.git#<tag-or-commit>"
+"com.tarinoi.unity": "https://github.com/tarinoi/tarinoi-unity-plugin.git#v0.2.0"
 ```
 
 Worth doing while the package is pre-1.0 and the API is still moving.

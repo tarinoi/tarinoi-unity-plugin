@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-28
+
 ### Added
 - **Core functions.** Regenerate Bindings now scaffolds `TarinoiCoreFunctions.cs` —
   the reference implementation of Tarinoi's built-in `Fn.tarinoi.*` set (flags,
@@ -21,6 +23,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scaffolded core functions for any collection left unbound; `TarinoiQuickstart`
   calls it after `SetupBindings`, so synced content that only uses core
   functions plays with no code.
+
+### Changed
+- Supported data format is now `2.0.0`. Function-declaration arguments moved from
+  `sub_type`/`allow_literal` to a `value_selectors` list; the package never read
+  those fields, so this only lifts the version gate that refused to sync `2.0.0`
+  documents.
+
+### Fixed
+- The quickstart showed a blank screen when a dialogue started. It cleared the
+  transcript on the first line's arrival, after the strip had already appended
+  that line; the transcript is now cleared when returning to the entry-point
+  picker instead. The view switching lives in `QuickstartViews`, which the
+  play-mode tests drive.
+- The entry-point list no longer offers a blank entry: the query matched the
+  `start` card *template* (which carries `base_ref` too) alongside the start
+  cards. Only `card` documents are listed now.
+- Several non-player lines passing their gates at once were presented as a
+  numbered menu. A non-player set is not a menu: the author picks the line by
+  condition, so only the first passing line (by geo.y) is shown, as in-app
+  playback does. A set with any player line in it is still a choice set;
+  non-player lines mixed into one are dropped with a warning rather than
+  offered.
+- Jump cards are followed again. A jump's destination is its `data.target`
+  card-link — the target card's bare document id, possibly on another board —
+  not the `target_collection_id` / `target_card_id` pair the runtime expected
+  (a documentation error the app corrected on 2026-08-27). Reaching a jump used
+  to stop the dialogue with "does not say where to jump to".
+  `IDocumentStore` gains `LocateCardAsync(cardId)`, with a default that finds
+  nothing so existing custom stores still compile; implement it for jumps.
+- Generated function stubs now carry their `Effect:` remark. Codegen read the
+  payload's `effect` key, which does not exist; the field is `function_effect`.
+
+## [0.1.0] - 2026-08-21
+
+### Added
 - Initial package scaffolding: UPM manifest, assembly definitions, and test harness.
 - `TarinoiLog` — log-level-gated logging.
 - `DataVersion` — semantic version compatibility gate for synced documents.
@@ -78,36 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   starting dialogue from the world.
 - Quickstart sample showing where a game registers its own bindings.
 
-### Changed
-- Supported data format is now `2.0.0`. Function-declaration arguments moved from
-  `sub_type`/`allow_literal` to a `value_selectors` list; the package never read
-  those fields, so this only lifts the version gate that refused to sync `2.0.0`
-  documents.
-
 ### Fixed
-- The quickstart showed a blank screen when a dialogue started. It cleared the
-  transcript on the first line's arrival, after the strip had already appended
-  that line; the transcript is now cleared when returning to the entry-point
-  picker instead. The view switching lives in `QuickstartViews`, which the
-  play-mode tests drive.
-- The entry-point list no longer offers a blank entry: the query matched the
-  `start` card *template* (which carries `base_ref` too) alongside the start
-  cards. Only `card` documents are listed now.
-- Several non-player lines passing their gates at once were presented as a
-  numbered menu. A non-player set is not a menu: the author picks the line by
-  condition, so only the first passing line (by geo.y) is shown, as in-app
-  playback does. A set with any player line in it is still a choice set;
-  non-player lines mixed into one are dropped with a warning rather than
-  offered.
-- Jump cards are followed again. A jump's destination is its `data.target`
-  card-link — the target card's bare document id, possibly on another board —
-  not the `target_collection_id` / `target_card_id` pair the runtime expected
-  (a documentation error the app corrected on 2026-08-27). Reaching a jump used
-  to stop the dialogue with "does not say where to jump to".
-  `IDocumentStore` gains `LocateCardAsync(cardId)`, with a default that finds
-  nothing so existing custom stores still compile; implement it for jumps.
-- Generated function stubs now carry their `Effect:` remark. Codegen read the
-  payload's `effect` key, which does not exist; the field is `function_effect`.
 - A bare `Var.collection.flag` used as a condition now reads the variable. In the
   Godot plugin the unresolved reference is itself truthy, so such conditions are
   always true regardless of the variable's value.

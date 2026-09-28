@@ -1,6 +1,6 @@
 {
   "name": "com.tarinoi.unity",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Tarinoi",
   "description": "Tarinoi dialogue for Unity. Syncs authored dialogue content from the Tarinoi service into a local SQLite database, evaluates authored conditions and functions against your game's bindings, and drives dialogue playback through a simple event-based runtime.",
   "unity": "6000.0",
